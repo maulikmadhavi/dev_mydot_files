@@ -16,10 +16,10 @@ pixi global install tmux yarn python=3.10 git nvim conda
 # zsh setup
 ```bash
 # Download and extract
-wget http://www.zsh.org/pub/zsh-5.4.2.tar.gz
-tar -xzf zsh-5.4.2.tar.gz
-rm zsh-5.4.2.tar.gz
-cd zsh-5.4.2
+wget http://www.zsh.org/pub/zsh-5.9.tar.xz
+tar -xzf zsh-5.9.tar.xz
+rm zsh-5.9.tar.xz
+cd zsh-5.9
 
 # install to $HOME/local -- change it to suit your case
 mkdir ~/local
