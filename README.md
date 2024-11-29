@@ -13,3 +13,20 @@ pixi global install tmux yarn python=3.10 git nvim conda
 ## Secrets
 `secret.sh` is not the part of the project, which preserves the secret environment varibles.
 
+# zsh setup
+```bash
+# Download and extract
+wget http://www.zsh.org/pub/zsh-5.4.2.tar.gz
+tar -xzf zsh-5.4.2.tar.gz
+rm zsh-5.4.2.tar.gz
+cd zsh-5.4.2
+
+# install to $HOME/local -- change it to suit your case
+mkdir ~/local
+# check install directory
+./configure --prefix=$HOME/local
+make
+# all tests should pass or skip
+make check
+make install
+```
