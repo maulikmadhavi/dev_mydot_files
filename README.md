@@ -31,3 +31,7 @@ git clone https://github.com/wting/autojump.git ~/autojump && \
   ./install.py
 
 ```
+
+# nvim plugin install
+- This command to test the plugin available `:echo exists('*plug#begin')`
+- This command to install listed plugin `::PlugInstall`
