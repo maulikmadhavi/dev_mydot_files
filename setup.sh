@@ -8,7 +8,7 @@ cp -r .config/nvim/* ~/.config/nvim/.
 curl -fsSL https://pixi.sh/install.sh | bash
 #pixi install
 source ~/.bashrc
-pixi global install tmux yarn python=3.10 git nvim conda
+pixi global install tmux yarn python=3.10 git nvim conda zsh
 
 
 # === nvim
@@ -28,7 +28,7 @@ fi
 # ===  Oh-my-zsh
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 cp .zshrc ~/.zshrc
-cp .zshrc.pre-oh-my-zsh ~/.
+# cp .zshrc.pre-oh-my-zsh ~/.
 zsh
 git clone https://github.com/zsh-users/zsh-autosuggestions ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
 git clone https://github.com/zsh-users/zsh-syntax-highlighting ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
