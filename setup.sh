@@ -8,7 +8,7 @@ cp -r .config/nvim/* ~/.config/nvim/.
 curl -fsSL https://pixi.sh/install.sh | bash
 #pixi install
 source ~/.bashrc
-pixi global install tmux yarn python=3.10 git nvim conda zsh
+pixi global install tmux yarn git nvim zsh
 
 
 # === nvim
