@@ -154,3 +154,12 @@ export GOPATH=$HOME/go
 export PATH=$GOPATH/bin:$GOROOT/bin:$HOME/.local/bin:$PATH
 
 export PATH="~/.pixi/bin:$PATH"
+
+
+# Just incase zsh is not installed and local install via pixi
+# then add shell and redirect to zsh default
+
+[[ -s $HOME/.autojump/etc/profile.d/autojump.sh ]] && source $HOME/.autojump/etc/profile.d/autojump.sh
+
+export SHELL=zsh
+exec $SHELL -l
