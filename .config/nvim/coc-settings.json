@@ -1,0 +1,27 @@
+{
+  languageserver: {
+    python: {
+      command: pylsp,
+      args: [--stdio],
+      filetypes: [python],
+      settings: {
+        pylsp: {
+          plugins: {
+            pycodestyle: {
+              enabled: true
+            },
+            mccabe: {
+              enabled: true
+            },
+            pyflakes: {
+              enabled: true
+            },
+            pylint: {
+              enabled: true
+            }
+          }
+        }
+      }
+    }
+  }
+}

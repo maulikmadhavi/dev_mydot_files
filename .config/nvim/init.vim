@@ -24,9 +24,35 @@ nnoremap <C-n> :NERDTree<CR>
 nnoremap <C-t> :NERDTreeToggle<CR>
 nnoremap <C-l> :UndotreeToggle<CR>
 
+" Use <Tab> for autocompletion navigation
+inoremap <expr> <Tab> pumvisible() ? "\<C-n>" : "\<Tab>"
+inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
+
+" Use <Tab> to indent selected lines in visual mode
+vnoremap <Tab> >gv
+vnoremap <S-Tab> <gv
+
+" Use <Tab> to jump to the next snippet placeholder (for coc-snippets)
+let g:coc_snippet_next = '<Tab>'
+let g:coc_snippet_prev = '<S-Tab>'
+
 nmap <F6> :TagbarToggle<CR>
 
-call plug#begin()
+
+
+
+call plug#begin('~/.config/nvim/plugged')
+
+" Add your plugins here
+Plug 'neoclide/coc.nvim', {'branch': 'release'}
+" or for nvim-cmp
+Plug 'hrsh7th/nvim-cmp'
+Plug 'hrsh7th/cmp-buffer'
+Plug 'hrsh7th/cmp-path'
+Plug 'hrsh7th/cmp-nvim-lsp'
+Plug 'hrsh7th/cmp-nvim-lua'
+Plug 'saadparwaiz1/cmp_luasnip'
+Plug 'L3MON4D3/LuaSnip'
 
 Plug 'http://github.com/tpope/vim-surround' " Surrounding ysw)
 Plug 'https://github.com/tpope/vim-commentary' " For Commenting gcc & gc
