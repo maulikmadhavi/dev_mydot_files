@@ -30,7 +30,6 @@ nnoremap <C-b> :NvimTreeToggle<CR>
 nnoremap <C-x> :FloatermToggle<CR>
 tnoremap <C-x> <C-\><C-n>:FloatermToggle<CR>
 
-
 " Use <Tab> for autocompletion navigation
 inoremap <expr> <Tab> pumvisible() ? "\<C-n>" : "\<Tab>"
 inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
@@ -41,20 +40,9 @@ vnoremap <S-Tab> <gv
 
 " Use <Tab> to jump to the next snippet placeholder (for coc-snippets)
 let g:coc_snippet_next = '<Tab>'" Normal mode: Ctrl + t to toggle Floaterm
-nnoremap <C-t> :FloatermToggle<CR>
 
-" Terminal mode: Ctrl + t to toggle Floaterm
-tnoremap <C-t> <C-\><C-n>:FloatermToggle<CR>" Normal mode: Ctrl + t to toggle Floaterm
-nnoremap <C-t> :FloatermToggle<CR>
-
-" Terminal mode: Ctrl + t to toggle Floaterm
-tnoremap <C-t> <C-\><C-n>:FloatermToggle<CR>
 let g:coc_snippet_prev = '<S-Tab>'
-
 nmap <F6> :TagbarToggle<CR>
-
-
-
 
 call plug#begin('~/.config/nvim/plugged')
 
