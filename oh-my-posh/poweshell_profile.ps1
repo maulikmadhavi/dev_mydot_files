@@ -1,0 +1,1 @@
+oh-my-posh init pwsh --config "$HOME\Documents\PowerShell\Themes\custom_alanpeabody.omp.json" | Invoke-Expression
