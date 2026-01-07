@@ -122,10 +122,10 @@ __conda_setup="$('/home/maulik/miniconda3/bin/conda' 'shell.bash' 'hook' 2> /dev
 if [ $? -eq 0 ]; then
     eval "$__conda_setup"
 else
-    if [ -f "~/miniconda3/etc/profile.d/conda.sh" ]; then
-        . "~/miniconda3/etc/profile.d/conda.sh"
+    if [ -f "/home/maulik/miniconda3/etc/profile.d/conda.sh" ]; then
+        . "/home/maulik/miniconda3/etc/profile.d/conda.sh"
     else
-        export PATH="~/miniconda3/bin:$PATH"
+        export PATH="/home/maulik/miniconda3/bin:$PATH"
     fi
 fi
 unset __conda_setup
@@ -163,3 +163,4 @@ export PATH="~/.pixi/bin:$PATH"
 
 export SHELL=zsh
 exec $SHELL -l
+export PATH="/home/maulik/.pixi/bin:$PATH"

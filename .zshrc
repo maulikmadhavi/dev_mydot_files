@@ -73,8 +73,8 @@ COMPLETION_WAITING_DOTS="true"
 #plugins=(git)
 
 # Add plugins
-#plugins=(git zsh-autosuggestions zsh-syntax-highlighting z colored-man-pages fzf)
-plugins=(git autojump zsh-autosuggestions zsh-syntax-highlighting)
+plugins=(git zsh-autosuggestions z colored-man-pages fzf zsh-syntax-highlighting)
+#plugins=(git autojump zsh-autosuggestions zsh-syntax-highlighting)
 
 # Set FZF_BASE directory
 export FZF_BASE=/usr/share/fzf
@@ -114,15 +114,15 @@ alias vim=nvim
 export PATH="~/.pixi/bin:$PATH"
 
 # >>> conda initialize >>>
-__conda_setup="$('~/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+# !! Contents within this block are managed by 'conda init' !!
+__conda_setup="$('/home/maulik/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
 if [ $? -eq 0 ]; then
     eval "$__conda_setup"
 else
-    if [ -f "~/miniconda3/etc/profile.d/conda.sh" ]; then
-        . "~/miniconda3/etc/profile.d/conda.sh"
-         CONDA_CHANGEPS1=false conda activate base
+    if [ -f "/home/maulik/miniconda3/etc/profile.d/conda.sh" ]; then
+        . "/home/maulik/miniconda3/etc/profile.d/conda.sh"
     else
-        export PATH="~/miniconda3/bin:$PATH"
+        export PATH="/home/maulik/miniconda3/bin:$PATH"
     fi
 fi
 unset __conda_setup
@@ -132,3 +132,6 @@ export PATH="$PATH:/opt/nvim-linux64/bin"
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+export PATH="/home/maulik/.pixi/bin:$PATH"
+export FZF_BASE=/home/maulik/.pixi/bin/fzf
