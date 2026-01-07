@@ -1,14 +1,14 @@
 # First copy current bashrc as backup abd cioy the things
 
 # cp ~/.bashrc ~/.bashrc_bak
-mkdir -p ~/.config/nvim
-cp -r .config/nvim/* ~/.config/nvim/.
+#mkdir -p ~/.config/nvim
+#cp -r .config/nvim/* ~/.config/nvim/.
 
 # === pixi
 curl -fsSL https://pixi.sh/install.sh | bash
 #pixi install
 source ~/.bashrc
-pixi global install tmux yarn git nvim zsh python-lsp-server
+pixi global install tmux yarn git nvim zsh python-lsp-server stow
 
 # === nvim
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
@@ -26,7 +26,8 @@ fi
 
 # ===  Oh-my-zsh
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-cp .zshrc ~/.zshrc
+#cp .zshrc ~/.zshrc
 # cp .zshrc.pre-oh-my-zsh ~/.
-zsh
 
+stow .
+zsh
