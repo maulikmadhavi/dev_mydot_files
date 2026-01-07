@@ -25,24 +25,23 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 nvm install --lts
 
-# === Install nvim plugins
-if [ -f ~/.local/share/nvim/site/autoload/plug.vim ]; then
-    nvim --headless +PlugInstall +qall
-else
-  curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs \
-    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-  nvim --headless +PlugInstall +qall
-fi
+# === Install vim-plug (before stow, for nvim)
+curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs \
+  https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
 # === Pre-create zshrc to avoid interactive prompts
 touch ~/.zshrc
 
-# === Oh-my-zsh (non-interactive mode, skip if already installed)
-if [ ! -d ~/.oh-my-zsh ]; then
-    RUNZSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || {
-        echo "Warning: Oh-my-zsh installation failed. Continuing anyway."
-    }
-fi
+# === Oh-my-zsh (skip - user should install separately if needed)
+# Note: oh-my-zsh installation requires the actual user to own the home directory
+# Run separately as the target user:
+#   RUNZSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+echo "Note: Run oh-my-zsh setup as the actual user (maulik) if needed"
 
-# === Apply stow to create symlinks for dotfiles
+# === Apply stow to create symlinks for dotfiles (this links nvim config)
 stow . --adopt
+
+# === Install nvim plugins (after stow, so config is linked)
+nvim --headless +PlugInstall +qall 2>/dev/null || {
+    echo "Warning: nvim PlugInstall had issues but continuing"
+}
