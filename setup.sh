@@ -7,12 +7,13 @@
 # === pixi
 curl -fsSL https://pixi.sh/install.sh | bash
 #pixi install
-source ~/.bashrc
+. ~/.bashrc
 pixi global install tmux yarn git nvim zsh python-lsp-server stow
 
-# === nvim
+# === nvm
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
-source ~/.bashrc  # or ~/.zshrc, depending on your shell
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 nvm install --lts
 if [ -f ~/.local/share/nvim/site/autoload/plug.vim ]; then
     nvim --headless +PlugInstall +qall
@@ -22,16 +23,19 @@ else
   nvim --headless +PlugInstall +qall
 fi
 
-
+# === Handle conflicting nvim configs - keep only one
+if [ -f ~/.config/nvim/init.vim ] && [ -f ~/.config/nvim/init.lua ]; then
+    echo "Warning: Both init.vim and init.lua exist. Keeping init.lua (modern nvim)"
+    rm ~/.config/nvim/init.vim
+fi
 
 # === Pre-create zshrc to avoid interactive prompts
 touch ~/.zshrc
 
-# === Oh-my-zsh (non-interactive mode)
-RUNZSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || true
+# === Oh-my-zsh (non-interactive mode, skip if already installed)
+if [ ! -d ~/.oh-my-zsh ]; then
+    RUNZSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || true
+fi
 
-# Apply stow to create symlinks for dotfiles
+# === Apply stow to create symlinks for dotfiles
 stow .
-
-# Source zshrc to apply changes in current session
-exec zsh -l
