@@ -24,10 +24,14 @@ fi
 
 
 
-# ===  Oh-my-zsh
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-#cp .zshrc ~/.zshrc
-# cp .zshrc.pre-oh-my-zsh ~/.
+# === Pre-create zshrc to avoid interactive prompts
+touch ~/.zshrc
 
+# === Oh-my-zsh (non-interactive mode)
+RUNZSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || true
+
+# Apply stow to create symlinks for dotfiles
 stow .
-zsh
+
+# Source zshrc to apply changes in current session
+exec zsh -l
