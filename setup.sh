@@ -6,8 +6,7 @@
 
 # === pixi
 curl -fsSL https://pixi.sh/install.sh | bash
-#pixi install
-. ~/.bashrc
+export PATH="$HOME/.pixi/bin:$PATH"
 pixi global install tmux yarn git nvim zsh python-lsp-server stow
 
 # === Clean up conflicting config files BEFORE installing plugins
@@ -32,12 +31,11 @@ curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs \
 # === Pre-create zshrc to avoid interactive prompts
 #touch ~/.zshrc
 
-# === Oh-my-zsh (skip - user should install separately if needed)
-# Note: oh-my-zsh installation requires the actual user to own the home directory
-# Run separately as the target user:
-
-if [ ! -d ~/.oh-my-zsh ]; then
-    RUNZSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || true
+# === Oh-my-zsh as git submodule
+# Initialize submodule if not already present
+if [ ! -d .oh-my-zsh/.git ]; then
+    git submodule update --init --recursive .oh-my-zsh 2>/dev/null || \
+    git submodule add https://github.com/ohmyzsh/ohmyzsh.git .oh-my-zsh 2>/dev/null || true
 fi
 # === Apply stow to create symlinks for dotfiles (this links nvim config)
 stow . --adopt
