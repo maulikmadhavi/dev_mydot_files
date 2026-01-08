@@ -10,7 +10,7 @@ git submodule update --init .oh-my-zsh
 # === pixi
 curl -fsSL https://pixi.sh/install.sh | bash
 export PATH="$HOME/.pixi/bin:$PATH"
-pixi global install tmux yarn git nvim zsh python-lsp-server stow
+pixi global install tmux yarn git nvim zsh python-lsp-server stow tree fzf diskus 
 
 # === Clean up conflicting config files BEFORE installing plugins
 if [ -f ~/.config/nvim/init.vim ] && [ -f ~/.config/nvim/init.lua ]; then
