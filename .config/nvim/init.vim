@@ -1,9 +1,10 @@
+
 :set showmatch      " show matching
 :set number         " add line number
 :set relativenumber " add relative number
 :set smarttab       " smart tab
 :set autoindent     " indent a new line the same amount as the line just typed
-:set tabstop=4      "
+:set tabstop=4      " 
 :set wildmode=longest,list " set bash-like tab-completion
 :set shiftwidth=4
 :set softtabstop=4
@@ -13,7 +14,7 @@
 :set clipboard=unnamedplus  " using system clipboard
 :set cursorline   " highlight current cursorline
 :set ttyfast      " seepd up scrorring in Vim
-
+	
 
 let g:NERDTreeDirArrowExpandable="+"
 let g:NERDTreeDirArrowCollapsible="~"
@@ -26,22 +27,25 @@ nnoremap <C-l> :UndotreeToggle<CR>
 nnoremap <C-g> :Files<CR>
 nnoremap <C-r> :Rg<CR>
 nnoremap <C-b> :NvimTreeToggle<CR>
+
 " Terminal mapping
-nnoremap <C-x> :FloatermToggle<CR>
-tnoremap <C-x> <C-\><C-n>:FloatermToggle<CR>
+nnoremap <C-x> :FlotermToggle<CR>
+tnoremap <C-x> <C-\><C-n>:FlotermToggle<CR>
+
 
 " Use <Tab> for autocompletion navigation
-inoremap <expr> <Tab> pumvisible() ? "\<C-n>" : "\<Tab>"
+inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
 inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
+inoremap <expr> <cr>    pumvisible() ? asyncomplete#close_popup() : "\<cr>"
 
 " Use <Tab> to indent selected lines in visual mode
 vnoremap <Tab> >gv
 vnoremap <S-Tab> <gv
 
 " Use <Tab> to jump to the next snippet placeholder (for coc-snippets)
-let g:coc_snippet_next = '<Tab>'" Normal mode: Ctrl + t to toggle Floaterm
-
+let g:coc_snippet_next = '<Tab>'
 let g:coc_snippet_prev = '<S-Tab>'
+
 nmap <F6> :TagbarToggle<CR>
 
 call plug#begin('~/.config/nvim/plugged')
@@ -56,8 +60,6 @@ Plug 'hrsh7th/cmp-nvim-lsp'
 Plug 'hrsh7th/cmp-nvim-lua'
 Plug 'saadparwaiz1/cmp_luasnip'
 Plug 'L3MON4D3/LuaSnip'
-Plug 'nvim-tree/nvim-tree.lua'
-Plug 'nvim-tree/nvim-web-devicons'  " Optional, for file icons
 
 Plug 'http://github.com/tpope/vim-surround' " Surrounding ysw)
 Plug 'https://github.com/tpope/vim-commentary' " For Commenting gcc & gc
@@ -80,4 +82,5 @@ Plug 'https://github.com/matze/vim-move'
 Plug 'voldikss/vim-floaterm'
 Plug 'vim-python/python-syntax'
 Plug 'alvan/vim-closetag'
-call plug#end()
+call plug#end()		
+

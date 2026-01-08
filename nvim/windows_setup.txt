@@ -1,9 +1,0 @@
-For plugin install
-:PlugInstall
-
-
-# Setting up vim -> nvim
-Set-Alias -Name vim -Value nvim
-
-# Install CoC extensions:
-:CocInstall coc-python coc-json coc-git coc-html coc-css

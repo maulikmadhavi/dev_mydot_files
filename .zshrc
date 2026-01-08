@@ -136,3 +136,5 @@ export NVM_DIR="$HOME/.nvm"
 
 export PATH="~/.pixi/bin:$PATH"
 export FZF_BASE=~/.pixi/bin/fzf
+
+export PATH="/home/maulik/.pixi/bin:$PATH"
