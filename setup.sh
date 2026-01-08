@@ -30,14 +30,15 @@ curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs \
   https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
 # === Pre-create zshrc to avoid interactive prompts
-touch ~/.zshrc
+#touch ~/.zshrc
 
 # === Oh-my-zsh (skip - user should install separately if needed)
 # Note: oh-my-zsh installation requires the actual user to own the home directory
 # Run separately as the target user:
-#   RUNZSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-echo "Note: Run oh-my-zsh setup as the actual user (maulik) if needed"
 
+if [ ! -d ~/.oh-my-zsh ]; then
+    RUNZSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || true
+fi
 # === Apply stow to create symlinks for dotfiles (this links nvim config)
 stow . --adopt
 
