@@ -4,6 +4,9 @@
 #mkdir -p ~/.config/nvim
 #cp -r .config/nvim/* ~/.config/nvim/.
 
+# ==== Recusirve call submodules to update ohmyzsh
+git submodule update --init .oh-my-zsh
+
 # === pixi
 curl -fsSL https://pixi.sh/install.sh | bash
 export PATH="$HOME/.pixi/bin:$PATH"
@@ -44,3 +47,12 @@ stow . --adopt
 nvim --headless +PlugInstall +qall 2>/dev/null || {
     echo "Warning: nvim PlugInstall had issues but continuing"
 }
+
+
+# == Go to zsh
+chsh -s $(which zsh)
+
+sh setup_inside_zsh.sh
+
+# === Final message
+echo "Setup complete! Please restart your terminal."
