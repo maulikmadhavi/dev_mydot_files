@@ -17,8 +17,18 @@ if (Get-Command pixi -ErrorAction SilentlyContinue) {
         Write-Host "[!] Error installing Pixi: $_" -ForegroundColor Yellow
     }
 }
+
 # Install required packages via Pixi
-pixi global install yarn git python-lsp-server fzf diskus 
+pixi global install yarn python-lsp-server fzf diskus 
+
+# === Step 0: Install Git
+Write-Host "`n[*] Installing Git..." -ForegroundColor Cyan
+try {
+    winget install --id Git.Git -e --source winget --accept-package-agreements --accept-source-agreements
+    Write-Host "[OK] Git installed successfully" -ForegroundColor Green
+} catch {
+    Write-Host "[!] Error installing Git: $_" -ForegroundColor Yellow
+}
 
 # === Step 1: Install oh-my-posh using winget
 Write-Host "`n[*] Installing oh-my-posh..." -ForegroundColor Cyan
@@ -171,7 +181,6 @@ Write-Host "`n"
 
 
 # ==== Install nvim plug-in manager ===
-pixi global uninstall neovim vim  # uninstall any existing neovim/vim via pixi to avoid conflicts
 winget install Neovim.Neovim  # To allow non-Admin install of nvim
 
 
@@ -199,3 +208,15 @@ Write-Host "[OK] vim-plug installed successfully" -ForegroundColor Green
 # Verify nvim is obtainable before running
 $nvimExe = Get-Command nvim -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue
 
+# Set alias in powershell profile
+if ($nvimExe) {
+    if ($profileContent -notlike "*alias vim=nvim*") {
+        Write-Host "Adding alias 'vim=nvim' to PowerShell profile..." -ForegroundColor Gray
+        Add-Content $PROFILE -Value 'Set-Alias vim nvim' -Encoding UTF8
+        Write-Host "[OK] Alias added to profile" -ForegroundColor Green
+    } else {        
+        Write-Host "[OK] Alias 'vim=nvim' already exists in profile." -ForegroundColor Green
+    }
+} else {
+    Write-Host "[!] nvim executable not found. Skipping alias setup." -ForegroundColor Yellow
+}
