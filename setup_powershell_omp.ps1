@@ -220,3 +220,38 @@ if ($nvimExe) {
 } else {
     Write-Host "[!] nvim executable not found. Skipping alias setup." -ForegroundColor Yellow
 }
+
+# ===== tmux [psmux] setup =====
+choco install psmux -y
+
+
+# ===== auto suggest / auto complete setup =====
+Write-Host "`n[*] Configuring PSReadLine (IntelliSense)..." -ForegroundColor Cyan
+
+# Commands to add to profile
+$psReadlineConfig = @'
+# PSReadLine Autocomplete
+if (Get-Command Set-PSReadLineOption -ErrorAction SilentlyContinue) {
+    Set-PSReadLineOption -PredictionSource History
+    Set-PSReadLineOption -Colors @{ InlinePrediction = 'DarkGreen' }
+    Set-PSReadLineOption -PredictionViewStyle InlineView
+}
+'@
+
+# Check and add to profile
+$currentProfile = Get-Content $PROFILE -ErrorAction SilentlyContinue
+if ($currentProfile -notlike "*Set-PSReadLineOption -PredictionSource*") {
+    Add-Content $PROFILE -Value "`n$psReadlineConfig" -Encoding UTF8
+    Write-Host "[OK] Added PSReadLine config to profile" -ForegroundColor Green
+}
+
+# Apply for current session to verify
+try {
+    # Fix: -PredictionColor parameter is invalid, use -Colors hashtable
+    Set-PSReadLineOption -PredictionSource History
+    Set-PSReadLineOption -Colors @{ InlinePrediction = 'DarkGreen' }
+    Set-PSReadLineOption -PredictionViewStyle InlineView
+    Write-Host "[OK] Enabled Predictive IntelliSense" -ForegroundColor Green
+} catch {
+    Write-Host "[!] Error setting PSReadLine options: $_" -ForegroundColor Yellow
+}
