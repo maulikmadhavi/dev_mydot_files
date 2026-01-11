@@ -5,12 +5,19 @@ Write-Host "🚀 Starting Oh-My-Posh setup for PowerShell..." -ForegroundColor G
 
 # === Step 0: Install Pixi
 Write-Host "`n[*] Installing Pixi..." -ForegroundColor Cyan
-try {
+# Check if Pixi is already installed
+if (Get-Command pixi -ErrorAction SilentlyContinue) {
+    Write-Host "[OK] Pixi is already installed." -ForegroundColor Green
+} else {
+    Write-Host "[*] Pixi not found. Proceeding with installation..." -ForegroundColor Yellow
+    try {
     powershell -ExecutionPolicy Bypass -c "irm -useb https://pixi.sh/install.ps1 | iex"
     Write-Host "[OK] Pixi installed successfully" -ForegroundColor Green
-} catch {
-    Write-Host "[!] Error installing Pixi: $_" -ForegroundColor Yellow
+    } catch {
+        Write-Host "[!] Error installing Pixi: $_" -ForegroundColor Yellow
+    }
 }
+
 
 pixi global install yarn git nvim python-lsp-server fzf diskus 
 
@@ -152,3 +159,20 @@ Write-Host "`nTo view available themes, run:" -ForegroundColor Cyan
 Write-Host "   oh-my-posh get themes" -ForegroundColor Gray
 
 Write-Host "`n"
+
+# ======= Dot file management ===
+
+Write-Host "`n[*] Installing PSDotFiles module for dotfile management..." -ForegroundColor Cyan
+# First check if the module is already installed
+if (Get-Module -ListAvailable -Name PSDotFiles) {
+    Write-Host "[OK] PSDotFiles module is already installed." -ForegroundColor Green
+} else {
+    Write-Host "[*] PSDotFiles module not found. Proceeding with installation..." -ForegroundColor Yellow
+
+    try {
+        Install-Module -Name PSDotFiles -Scope CurrentUser -Force -SkipPublisherCheck
+        Write-Host "[OK] PSDotFiles module installed successfully" -ForegroundColor Green
+    } catch {
+        Write-Host "[!] Error installing PSDotFiles: $_" -ForegroundColor Yellow
+    }
+}
