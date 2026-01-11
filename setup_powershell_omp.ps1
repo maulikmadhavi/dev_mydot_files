@@ -255,3 +255,6 @@ try {
 } catch {
     Write-Host "[!] Error setting PSReadLine options: $_" -ForegroundColor Yellow
 }
+
+# ====== Additionals ======
+pixi global install ripgrep eza gcc gxx make cmake
