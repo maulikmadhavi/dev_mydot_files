@@ -17,9 +17,8 @@ if (Get-Command pixi -ErrorAction SilentlyContinue) {
         Write-Host "[!] Error installing Pixi: $_" -ForegroundColor Yellow
     }
 }
-
-
-pixi global install yarn git nvim python-lsp-server fzf diskus 
+# Install required packages via Pixi
+pixi global install yarn git python-lsp-server fzf diskus 
 
 # === Step 1: Install oh-my-posh using winget
 Write-Host "`n[*] Installing oh-my-posh..." -ForegroundColor Cyan
@@ -42,6 +41,15 @@ try {
 # === Step 3: Refresh environment variables
 Write-Host "`n🔄 Refreshing environment variables..." -ForegroundColor Cyan
 $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH", "User")
+
+# Explicitly add Pixi bin path if it exists, as it might not be in the registry yet
+$pixiBinPath = Join-Path $HOME ".pixi\envs\nvim\Library\bin"
+if (Test-Path $pixiBinPath) {
+    if ($env:PATH -notlike "*$pixiBinPath*") {
+        Write-Host "Adding Pixi bin path to current session: $pixiBinPath" -ForegroundColor Gray
+        $env:PATH += ";$pixiBinPath"
+    }
+}
 
 # === Step 4: Get oh-my-posh themes path
 Write-Host "`n[*] Getting oh-my-posh themes path..." -ForegroundColor Cyan
@@ -72,6 +80,7 @@ if ($profileContent -notlike "*oh-my-posh*") {
 } else {
     Write-Host "[OK] oh-my-posh is already configured in the profile." -ForegroundColor Green
 }
+
 
 # === Step 7: Install FiraCode Nerd Font
 Write-Host "`n[*] Installing FiraCode Nerd Font..." -ForegroundColor Cyan
@@ -160,24 +169,12 @@ Write-Host "   oh-my-posh get themes" -ForegroundColor Gray
 
 Write-Host "`n"
 
-# ======= Dot file management ===
-
-Write-Host "`n[*] Installing PSDotFiles module for dotfile management..." -ForegroundColor Cyan
-# First check if the module is already installed
-if (Get-Module -ListAvailable -Name PSDotFiles) {
-    Write-Host "[OK] PSDotFiles module is already installed." -ForegroundColor Green
-} else {
-    Write-Host "[*] PSDotFiles module not found. Proceeding with installation..." -ForegroundColor Yellow
-
-    try {
-        Install-Module -Name PSDotFiles -Scope CurrentUser -Force -SkipPublisherCheck
-        Write-Host "[OK] PSDotFiles module installed successfully" -ForegroundColor Green
-    } catch {
-        Write-Host "[!] Error installing PSDotFiles: $_" -ForegroundColor Yellow
-    }
-}
 
 # ==== Install nvim plug-in manager ===
+pixi global uninstall neovim vim  # uninstall any existing neovim/vim via pixi to avoid conflicts
+winget install Neovim.Neovim  # To allow non-Admin install of nvim
+
+
 # copy nvim config
 Write-Host "`n[*] Setting up Neovim plug-in manager (vim-plug)..." -ForegroundColor Cyan
 # copy .config/nvim/init.vim to ~/.config/nvim/init.vim
@@ -199,4 +196,6 @@ if (-not (Test-Path $plugVimDir)) {
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim" -OutFile $plugVimPath
 Write-Host "[OK] vim-plug installed successfully" -ForegroundColor Green
 
-nvim --headless +PlugInstall +qall
+# Verify nvim is obtainable before running
+$nvimExe = Get-Command nvim -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue
+
