@@ -176,3 +176,27 @@ if (Get-Module -ListAvailable -Name PSDotFiles) {
         Write-Host "[!] Error installing PSDotFiles: $_" -ForegroundColor Yellow
     }
 }
+
+# ==== Install nvim plug-in manager ===
+# copy nvim config
+Write-Host "`n[*] Setting up Neovim plug-in manager (vim-plug)..." -ForegroundColor Cyan
+# copy .config/nvim/init.vim to ~/.config/nvim/init.vim
+$sourceNvimConfig = ".\.config\nvim\init.vim"
+$destNvimConfigDir = "$HOME\.config\nvim"
+$destNvimConfig = Join-Path $destNvimConfigDir "init.vim"
+if (-not (Test-Path $destNvimConfigDir)) {
+    New-Item -ItemType Directory -Path $destNvimConfigDir -Force | Out-Null
+}
+Copy-Item -Path $sourceNvimConfig -Destination $destNvimConfig -Force
+Write-Host "[OK] Neovim configuration copied successfully" -ForegroundColor Green
+
+$plugVimPath = "$HOME\.local\share\nvim\site\autoload\plug.vim"
+$plugVimDir = Split-Path $plugVimPath -Parent
+if (-not (Test-Path $plugVimDir)) {
+    New-Item -ItemType Directory -Path $plugVimDir -Force | Out-Null
+}
+
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim" -OutFile $plugVimPath
+Write-Host "[OK] vim-plug installed successfully" -ForegroundColor Green
+
+nvim --headless +PlugInstall +qall
