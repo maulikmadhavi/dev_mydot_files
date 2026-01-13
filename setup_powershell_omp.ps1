@@ -213,6 +213,7 @@ if ($nvimExe) {
     if ($profileContent -notlike "*alias vim=nvim*") {
         Write-Host "Adding alias 'vim=nvim' to PowerShell profile..." -ForegroundColor Gray
         Add-Content $PROFILE -Value 'Set-Alias vim nvim' -Encoding UTF8
+
         Write-Host "[OK] Alias added to profile" -ForegroundColor Green
     } else {        
         Write-Host "[OK] Alias 'vim=nvim' already exists in profile." -ForegroundColor Green
@@ -258,3 +259,17 @@ try {
 
 # ====== Additionals ======
 pixi global install ripgrep eza gcc gxx make cmake
+
+
+# --------- copy aliases----------- 
+# === Linux/Unix Utility Aliases ===
+Add-Content $PROFILE -Value 'Set-Alias -Name cp -Value Copy-Item' -Encoding UTF8         # 'cp source dest'
+Add-Content $PROFILE -Value 'Set-Alias -Name mv -Value Move-Item' -Encoding UTF8        # 'mv source dest'
+Add-Content $PROFILE -Value 'Set-Alias -Name rm -Value Remove-Item' -Encoding UTF8      # 'rm file_or_folder'
+Add-Content $PROFILE -Value 'Set-Alias -Name ls -Value Get-ChildItem' -Encoding UTF8        # 'ls' for directory listing
+Add-Content $PROFILE -Value 'Set-Alias -Name cat -Value Get-Content' -Encoding UTF8    # 'cat file.txt' to view file content
+Add-Content $PROFILE -Value 'Set-Alias -Name pwd -Value Get-Location' -Encoding UTF8    # 'pwd' to print working directory
+Add-Content $PROFILE -Value 'Set-Alias -Name cd.. -Value Set-Location ..' -Encoding UTF8    # 'cd..' to go up one directory
+Add-Content $PROFILE -Value 'Set-Alias -Name grep -Value Select-String' -Encoding UTF8  # 'grep "pattern" file.txt'
+Add-Content $PROFILE -Value 'Set-Alias -Name clear -Value Clear-Host' -Encoding UTF8        # 'clear' screen
+Write-Host "[OK] Added common Linux/Unix utility aliases to profile" -ForegroundColor Green 
