@@ -165,6 +165,9 @@ if ($poshThemesPath) {
 }
 
 # === Final Instructions
+# Optionally clear existing profile content old so there's no conflicts
+Remove-Item -Path $PROFILE -Force; Write-Host "Profile cleared successfully"
+Write-Host "`n Clearing the old profile!" -ForegroundColor Green
 Write-Host "`n" -ForegroundColor Green
 Write-Host "╔════════════════════════════════════════════════════════════╗" -ForegroundColor Green
 Write-Host "║              Oh-My-Posh Setup Complete!                   ║" -ForegroundColor Green
@@ -263,13 +266,14 @@ pixi global install ripgrep eza gcc gxx make cmake
 
 # --------- copy aliases----------- 
 # === Linux/Unix Utility Aliases ===
-Add-Content $PROFILE -Value 'Set-Alias -Name cp -Value Copy-Item' -Encoding UTF8         # 'cp source dest'
-Add-Content $PROFILE -Value 'Set-Alias -Name mv -Value Move-Item' -Encoding UTF8        # 'mv source dest'
-Add-Content $PROFILE -Value 'Set-Alias -Name rm -Value Remove-Item' -Encoding UTF8      # 'rm file_or_folder'
-Add-Content $PROFILE -Value 'Set-Alias -Name ls -Value Get-ChildItem' -Encoding UTF8        # 'ls' for directory listing
-Add-Content $PROFILE -Value 'Set-Alias -Name cat -Value Get-Content' -Encoding UTF8    # 'cat file.txt' to view file content
-Add-Content $PROFILE -Value 'Set-Alias -Name pwd -Value Get-Location' -Encoding UTF8    # 'pwd' to print working directory
-Add-Content $PROFILE -Value 'Set-Alias -Name cd.. -Value Set-Location ..' -Encoding UTF8    # 'cd..' to go up one directory
-Add-Content $PROFILE -Value 'Set-Alias -Name grep -Value Select-String' -Encoding UTF8  # 'grep "pattern" file.txt'
-Add-Content $PROFILE -Value 'Set-Alias -Name clear -Value Clear-Host' -Encoding UTF8        # 'clear' screen
+# Use functions instead of aliases for built-in aliases to override AllScope restrictions
+Add-Content $PROFILE -Value 'function cp { Copy-Item @args }' -Encoding UTF8         # 'cp source dest'
+Add-Content $PROFILE -Value 'function mv { Move-Item @args }' -Encoding UTF8        # 'mv source dest'
+Add-Content $PROFILE -Value 'function rm { Remove-Item @args }' -Encoding UTF8      # 'rm file_or_folder'
+Add-Content $PROFILE -Value 'function ls { Get-ChildItem @args }' -Encoding UTF8        # 'ls' for directory listing
+Add-Content $PROFILE -Value 'function cat { Get-Content @args }' -Encoding UTF8    # 'cat file.txt' to view file content
+Add-Content $PROFILE -Value 'function pwd { Get-Location }' -Encoding UTF8    # 'pwd' to print working directory
+Add-Content $PROFILE -Value 'function cd.. { Set-Location .. }' -Encoding UTF8    # 'cd..' to go up one directory
+Add-Content $PROFILE -Value 'Set-Alias -Name grep -Value Select-String -Force -Scope Global' -Encoding UTF8  # 'grep "pattern" file.txt'
+Add-Content $PROFILE -Value 'function clear { Clear-Host }' -Encoding UTF8        # 'clear' screen
 Write-Host "[OK] Added common Linux/Unix utility aliases to profile" -ForegroundColor Green 
