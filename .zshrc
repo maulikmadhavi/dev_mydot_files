@@ -80,6 +80,7 @@ plugins=(git zsh-autosuggestions z colored-man-pages fzf zsh-syntax-highlighting
 # Set FZF_BASE directory
 export FZF_BASE=/usr/share/fzf
 
+ZSH_DISABLE_COMPFIX=true
 source $ZSH/oh-my-zsh.sh
 
 alias vim=nvim
@@ -131,8 +132,11 @@ unset __conda_setup
 export PATH="$PATH:/opt/nvim-linux64/bin"
 
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+# Lazy-load nvm — only loads when nvm/node/npm/npx is first used
+nvm() { unfunction nvm; [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"; nvm "$@" }
+node() { unfunction node; [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"; node "$@" }
+npm() { unfunction npm; [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"; npm "$@" }
+npx() { unfunction npx; [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"; npx "$@" }
 
 export PATH="~/.pixi/bin:$PATH"
 export FZF_BASE=~/.pixi/bin/fzf

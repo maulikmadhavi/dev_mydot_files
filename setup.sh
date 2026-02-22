@@ -1,16 +1,11 @@
-# First copy current bashrc as backup abd cioy the things
-
-# cp ~/.bashrc ~/.bashrc_bak
-#mkdir -p ~/.config/nvim
-#cp -r .config/nvim/* ~/.config/nvim/.
-
-# ==== Recusirve call submodules to update ohmyzsh
-git submodule update --init .oh-my-zsh
+# Change to the repo directory so all relative paths work
+cd "$(dirname "$0")"
+REPO_DIR="$(pwd)"
 
 # === pixi
 curl -fsSL https://pixi.sh/install.sh | bash
 export PATH="$HOME/.pixi/bin:$PATH"
-pixi global install tmux yarn git nvim zsh python-lsp-server stow tree fzf diskus 
+pixi global install tmux yarn git nvim zsh python-lsp-server stow tree fzf diskus
 
 # === Clean up conflicting config files BEFORE installing plugins
 if [ -f ~/.config/nvim/init.vim ] && [ -f ~/.config/nvim/init.lua ]; then
@@ -31,28 +26,33 @@ nvm install --lts
 curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs \
   https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
-# === Pre-create zshrc to avoid interactive prompts
-#touch ~/.zshrc
-
 # === Oh-my-zsh as git submodule
-# Initialize submodule if not already present
-if [ ! -d .oh-my-zsh/.git ]; then
+if [ ! -d "$REPO_DIR/.oh-my-zsh/.git" ]; then
     git submodule update --init --recursive .oh-my-zsh 2>/dev/null || \
     git submodule add https://github.com/ohmyzsh/ohmyzsh.git .oh-my-zsh 2>/dev/null || true
 fi
-# === Apply stow to create symlinks for dotfiles (this links nvim config)
-stow . --adopt
+
+# Symlink .oh-my-zsh manually (excluded from stow to avoid conflicts with NTFS perms)
+# Remove if it's a plain directory (not a symlink) so we can link properly
+if [ -d "$HOME/.oh-my-zsh" ] && [ ! -L "$HOME/.oh-my-zsh" ]; then
+    rm -rf "$HOME/.oh-my-zsh"
+fi
+ln -sfn "$REPO_DIR/.oh-my-zsh" "$HOME/.oh-my-zsh"
+
+# === Apply stow to create symlinks for dotfiles
+stow --target="$HOME" . --adopt
+
+# === Install zsh plugins
+git clone https://github.com/zsh-users/zsh-autosuggestions "$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions" 2>/dev/null || true
+git clone https://github.com/zsh-users/zsh-syntax-highlighting "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" 2>/dev/null || true
 
 # === Install nvim plugins (after stow, so config is linked)
 nvim --headless +PlugInstall +qall 2>/dev/null || {
     echo "Warning: nvim PlugInstall had issues but continuing"
 }
 
-
 # == Go to zsh
 chsh -s $(which zsh)
-
-sh setup_inside_zsh.sh
 
 # === Final message
 echo "Setup complete! Please restart your terminal."
