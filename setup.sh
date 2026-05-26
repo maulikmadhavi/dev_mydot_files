@@ -5,7 +5,7 @@ REPO_DIR="$(pwd)"
 # === pixi
 curl -fsSL https://pixi.sh/install.sh | bash
 export PATH="$HOME/.pixi/bin:$PATH"
-pixi global install tmux yarn git nvim zsh python-lsp-server stow tree fzf diskus
+pixi global install tmux yarn git nvim zsh python-lsp-server stow tree fzf diskus xclip
 
 # === Clean up conflicting config files BEFORE installing plugins
 if [ -f ~/.config/nvim/init.vim ] && [ -f ~/.config/nvim/init.lua ]; then
