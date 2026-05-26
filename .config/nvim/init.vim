@@ -13,24 +13,14 @@
 :syntax on          " syntax highlight
 :set clipboard=unnamedplus  " using system clipboard
 
-" Portable clipboard setup:
-"  - WSL: force win32yank.exe (clip.exe is write-only; nvim auto-detect is flaky)
-"  - Linux X11:    needs xclip or xsel installed  (apt install xclip)
-"  - Linux Wayland: needs wl-clipboard installed  (apt install wl-clipboard)
-"  - macOS: pbcopy/pbpaste are built-in
-"  - Headless SSH (no DISPLAY): no system clipboard possible; "+y stays in-session
-let s:is_wsl = has('wsl')
-      \ || (filereadable('/proc/version')
-      \     && match(readfile('/proc/version'), '\cmicrosoft\|WSL') >= 0)
-if s:is_wsl && executable('win32yank.exe')
+" WSL: clip.exe is write-only and nvim's auto-detect is unreliable here
+if has('wsl') && executable('win32yank.exe')
   let g:clipboard = {
     \   'name': 'win32yank',
     \   'copy':  { '+': 'win32yank.exe -i --crlf', '*': 'win32yank.exe -i --crlf' },
     \   'paste': { '+': 'win32yank.exe -o --lf',  '*': 'win32yank.exe -o --lf'  },
-    \   'cache_enabled': 0,
     \ }
 endif
-" Everywhere else: let neovim's default provider detection handle it.
 :set cursorline   " highlight current cursorline
 :set ttyfast      " seepd up scrorring in Vim
 	
