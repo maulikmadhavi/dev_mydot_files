@@ -2,6 +2,8 @@
 
 Collection of dotfiles for keeping shell, editor, and prompt config consistent across machines. One installer per OS; everything else is config that gets symlinked into `$HOME`.
 
+For day-to-day key bindings and shortcuts (nvim custom mappings, tmux, screen, fzf, zsh plugins, ripgrep, eza, …) see [`cheatsheet.md`](cheatsheet.md).
+
 ---
 
 ## Quick start — Ubuntu / WSL / Linux (from a fresh account)
