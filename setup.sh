@@ -107,10 +107,20 @@ step
 nvim --headless +PlugInstall +qall 2>/dev/null || \
     echo "Warning: nvim PlugInstall had issues but continuing"
 
-# === 9. Switch default shell to zsh
+# === 9. Switch default shell to zsh (best-effort; needs no sudo)
 
 step
-chsh -s "$(which zsh)"
+# chsh can fail when zsh isn't in /etc/shells (common when zsh comes from pixi)
+# or when PAM rejects the change. The stowed .bashrc already does `exec zsh -l`,
+# so a failure here is non-fatal — zsh will still launch in new terminals.
+if chsh -s "$(which zsh)" 2>/dev/null; then
+    echo "Default login shell switched to zsh."
+else
+    echo "Note: 'chsh' couldn't change the login shell (likely zsh isn't in"
+    echo "      /etc/shells, which would need admin rights to add). No worries —"
+    echo "      .bashrc runs 'exec zsh -l' on interactive shells, so opening a"
+    echo "      new terminal will still drop you into zsh."
+fi
 
 # === Done
 
