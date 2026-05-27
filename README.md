@@ -120,3 +120,7 @@ After install, configure your terminal (Windows Terminal, etc.) to use **FiraCod
 - **`pixi: command not found` after install** — open a new shell, or `export PATH="$HOME/.pixi/bin:$PATH"`.
 - **nvim plugins missing** — open nvim and run `:PlugInstall` manually.
 - **PowerShell `cannot be loaded because running scripts is disabled`** — `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once.
+- **`Shift-<digit>` produces just the digit in vim (e.g. `%` → `5`, `*` → `8`) — only in VSCode's integrated terminal under WSL.** Notepad, Windows Terminal, and plain `wsl.exe` all work; only VSCode's WSL-Remote terminal rewrites the key. Try one of:
+  1. Open VSCode → `Ctrl-K Ctrl-S` (Keyboard Shortcuts), search `shift+5` — if anything is bound (often by a Vim/vscodevim extension), remove it or restrict its `when` clause to exclude `terminalFocus`.
+  2. Add `"terminal.integrated.sendKeybindingsToShell": true` to VSCode `settings.json` so all key combinations are forwarded to the shell.
+  3. Run vim from Windows Terminal / `wsl.exe` instead of VSCode's integrated terminal for serious editing sessions.
