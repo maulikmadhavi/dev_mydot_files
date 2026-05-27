@@ -65,7 +65,9 @@ This repo sets `clipboard=unnamedplus` in `init.vim`, so the **default register 
 | `"*y` / `"*p` | X11 primary selection on Linux; same as `+` on WSL/Windows |
 | `"0p` | Paste the last *yank* (skips deletes) |
 
-> Gotcha: `*` and `+` are shifted keys (`Shift-8`, `Shift-=`). If you see `E353: Nothing in register 8`, you typed `"8` not `"*` — Shift didn't hold. Just use plain `p`.
+> **Gotcha 1 — `E353: Nothing in register 8`.** `*` and `+` are shifted keys (`Shift-8`, `Shift-=`). If Shift doesn't hold you end up reading `"8` (the numbered register, usually empty). Use plain `p`.
+
+> **Gotcha 2 — `^M` at end of every pasted line.** That means the paste bypassed `g:clipboard`. The usual cause is `Ctrl-Shift-V` (terminal paste) in **insert mode**, which sends raw bytes — so CRLF from a Windows source (VSCode, Notepad) survives. Fix: paste with `p` in normal mode or `Ctrl-R +` in insert mode — both use `win32yank -o --lf` which strips the CR. To clean an already-polluted file: `:%s/\r$//` (trailing CR) or `:%s/\r//g` (everywhere).
 
 ### Custom mappings (this repo's `init.vim`)
 | Key | Action |
