@@ -1,58 +1,118 @@
-# Change to the repo directory so all relative paths work
+#!/usr/bin/env bash
+# Bootstrap script for Ubuntu / WSL / Linux. Safe to re-run.
+
 cd "$(dirname "$0")"
 REPO_DIR="$(pwd)"
 
-# === pixi
+# === Progress display
+
+STEPS=(
+  "Install Pixi + base packages"
+  "Clean conflicting configs"
+  "Install nvm + Node LTS"
+  "Install vim-plug"
+  "Initialize oh-my-zsh submodule"
+  "Stow dotfiles into \$HOME"
+  "Install zsh plugins"
+  "Install nvim plugins"
+  "Set zsh as default shell"
+)
+CURRENT_STEP=-1
+
+step() {
+  CURRENT_STEP=$((CURRENT_STEP + 1))
+  echo ""
+  echo "════════════════════════════════════════════════════════════════"
+  echo "  Setup Progress"
+  echo "════════════════════════════════════════════════════════════════"
+  for i in "${!STEPS[@]}"; do
+    if   (( i <  CURRENT_STEP )); then printf "  \033[0;32m[✓]\033[0m %s\n"             "${STEPS[$i]}"
+    elif (( i == CURRENT_STEP )); then printf "  \033[1;33m[▶]\033[0m %s  ← running\n" "${STEPS[$i]}"
+    else                               printf "  \033[0;37m[ ]\033[0m %s\n"             "${STEPS[$i]}"
+    fi
+  done
+  echo "════════════════════════════════════════════════════════════════"
+  echo ""
+}
+
+step_complete() {
+  echo ""
+  echo "════════════════════════════════════════════════════════════════"
+  echo "  Setup Complete!"
+  echo "════════════════════════════════════════════════════════════════"
+  for s in "${STEPS[@]}"; do
+    printf "  \033[0;32m[✓]\033[0m %s\n" "$s"
+  done
+  echo "════════════════════════════════════════════════════════════════"
+  echo ""
+}
+
+# === 1. Install Pixi + base packages
+
+step
 curl -fsSL https://pixi.sh/install.sh | bash
 export PATH="$HOME/.pixi/bin:$PATH"
 pixi global install tmux yarn git nvim zsh python-lsp-server stow tree fzf diskus xclip
 
-# === Clean up conflicting config files BEFORE installing plugins
+# === 2. Clean conflicting configs
+
+step
 if [ -f ~/.config/nvim/init.vim ] && [ -f ~/.config/nvim/init.lua ]; then
     echo "Removing conflicting init.vim (keeping init.lua)"
     rm ~/.config/nvim/init.vim
 fi
-
-# === Remove existing zsh/bash configs so stow can symlink them
 rm -f ~/.zshrc ~/.bashrc 2>/dev/null || true
 
-# === nvm
+# === 3. nvm + Node LTS
+
+step
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 nvm install --lts
 
-# === Install vim-plug (before stow, for nvim)
+# === 4. vim-plug
+
+step
 curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs \
   https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
-# === Oh-my-zsh as git submodule
+# === 5. oh-my-zsh submodule + symlink
+
+step
 if [ ! -d "$REPO_DIR/.oh-my-zsh/.git" ]; then
     git submodule update --init --recursive .oh-my-zsh 2>/dev/null || \
     git submodule add https://github.com/ohmyzsh/ohmyzsh.git .oh-my-zsh 2>/dev/null || true
 fi
-
-# Symlink .oh-my-zsh manually (excluded from stow to avoid conflicts with NTFS perms)
-# Remove if it's a plain directory (not a symlink) so we can link properly
+# .oh-my-zsh is excluded from stow (NTFS-perm conflicts on WSL); symlink manually.
 if [ -d "$HOME/.oh-my-zsh" ] && [ ! -L "$HOME/.oh-my-zsh" ]; then
     rm -rf "$HOME/.oh-my-zsh"
 fi
 ln -sfn "$REPO_DIR/.oh-my-zsh" "$HOME/.oh-my-zsh"
 
-# === Apply stow to create symlinks for dotfiles
+# === 6. Stow dotfiles
+
+step
 stow --target="$HOME" . --adopt
 
-# === Install zsh plugins
+# === 7. zsh plugins
+
+step
 git clone https://github.com/zsh-users/zsh-autosuggestions "$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions" 2>/dev/null || true
 git clone https://github.com/zsh-users/zsh-syntax-highlighting "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" 2>/dev/null || true
 
-# === Install nvim plugins (after stow, so config is linked)
-nvim --headless +PlugInstall +qall 2>/dev/null || {
+# === 8. nvim plugins
+
+step
+nvim --headless +PlugInstall +qall 2>/dev/null || \
     echo "Warning: nvim PlugInstall had issues but continuing"
-}
 
-# == Go to zsh
-chsh -s $(which zsh)
+# === 9. Switch default shell to zsh
 
-# === Final message
-echo "Setup complete! Please restart your terminal."
+step
+chsh -s "$(which zsh)"
+
+# === Done
+
+step_complete
+echo "Please restart your terminal."
