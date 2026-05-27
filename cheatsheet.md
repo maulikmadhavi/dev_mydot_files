@@ -55,10 +55,17 @@ Quick reference for the tools configured by this repo. Custom mappings (those de
 | `Ctrl-w =` | Equalize split sizes |
 
 ### System clipboard
+
+This repo sets `clipboard=unnamedplus` in `init.vim`, so the **default register *is* the system clipboard** — plain `y` / `p` / `yy` / `dd` already round-trip to the OS clipboard. You only need explicit register prefixes for the cases below.
+
 | Key | Action |
 |---|---|
-| `"+y` / `"+p` | Yank to / paste from system clipboard |
-| `"*y` / `"*p` | X11 primary selection (Linux) |
+| `y` / `p` / `yy` / `dd` | Default — uses system clipboard (`+` register) |
+| `"+y` / `"+p` | Explicit system clipboard yank / paste |
+| `"*y` / `"*p` | X11 primary selection on Linux; same as `+` on WSL/Windows |
+| `"0p` | Paste the last *yank* (skips deletes) |
+
+> Gotcha: `*` and `+` are shifted keys (`Shift-8`, `Shift-=`). If you see `E353: Nothing in register 8`, you typed `"8` not `"*` — Shift didn't hold. Just use plain `p`.
 
 ### Custom mappings (this repo's `init.vim`)
 | Key | Action |
