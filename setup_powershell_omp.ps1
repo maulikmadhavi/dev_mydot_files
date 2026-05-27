@@ -165,9 +165,6 @@ if ($poshThemesPath) {
 }
 
 # === Final Instructions
-# Optionally clear existing profile content old so there's no conflicts
-Remove-Item -Path $PROFILE -Force; Write-Host "Profile cleared successfully"
-Write-Host "`n Clearing the old profile!" -ForegroundColor Green
 Write-Host "`n" -ForegroundColor Green
 Write-Host "╔════════════════════════════════════════════════════════════╗" -ForegroundColor Green
 Write-Host "║              Oh-My-Posh Setup Complete!                   ║" -ForegroundColor Green
