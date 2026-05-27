@@ -1,67 +1,71 @@
 # PowerShell Oh-My-Posh Setup Script for Windows
-# This script configures oh-my-posh under PowerShell for Windows
+# Installs the Windows toolchain and configures $PROFILE for oh-my-posh,
+# Neovim, PSReadLine, and Linux-style aliases.
 
 Write-Host "🚀 Starting Oh-My-Posh setup for PowerShell..." -ForegroundColor Green
 
-# === Step 0: Install Pixi
+# === Helpers
+
+function Install-WithFeedback {
+    param([string]$Name, [scriptblock]$Action)
+    Write-Host "`n[*] Installing $Name..." -ForegroundColor Cyan
+    try {
+        & $Action
+        Write-Host "[OK] $Name installed successfully" -ForegroundColor Green
+    } catch {
+        Write-Host "[!] Error installing ${Name}: $_" -ForegroundColor Yellow
+    }
+}
+
+# Idempotent: appends $Content to $PROFILE only when $Marker isn't found there.
+function Add-ToProfileOnce {
+    param([string]$Marker, [string]$Content, [string]$Label)
+    $existing = Get-Content $PROFILE -ErrorAction SilentlyContinue
+    if ($existing -notlike "*$Marker*") {
+        Add-Content $PROFILE -Value $Content -Encoding UTF8
+        Write-Host "[OK] Added $Label to profile" -ForegroundColor Green
+    } else {
+        Write-Host "[OK] $Label already in profile" -ForegroundColor Green
+    }
+}
+
+# === Pixi
+
 Write-Host "`n[*] Installing Pixi..." -ForegroundColor Cyan
-# Check if Pixi is already installed
 if (Get-Command pixi -ErrorAction SilentlyContinue) {
     Write-Host "[OK] Pixi is already installed." -ForegroundColor Green
 } else {
-    Write-Host "[*] Pixi not found. Proceeding with installation..." -ForegroundColor Yellow
-    try {
-    powershell -ExecutionPolicy Bypass -c "irm -useb https://pixi.sh/install.ps1 | iex"
-    Write-Host "[OK] Pixi installed successfully" -ForegroundColor Green
-    } catch {
-        Write-Host "[!] Error installing Pixi: $_" -ForegroundColor Yellow
+    Install-WithFeedback "Pixi" {
+        powershell -ExecutionPolicy Bypass -c "irm -useb https://pixi.sh/install.ps1 | iex"
     }
 }
+pixi global install yarn python-lsp-server fzf diskus
 
-# Install required packages via Pixi
-pixi global install yarn python-lsp-server fzf diskus 
+# === Tooling installs
 
-# === Step 0: Install Git
-Write-Host "`n[*] Installing Git..." -ForegroundColor Cyan
-try {
+Install-WithFeedback "Git" {
     winget install --id Git.Git -e --source winget --accept-package-agreements --accept-source-agreements
-    Write-Host "[OK] Git installed successfully" -ForegroundColor Green
-} catch {
-    Write-Host "[!] Error installing Git: $_" -ForegroundColor Yellow
 }
-
-# === Step 1: Install oh-my-posh using winget
-Write-Host "`n[*] Installing oh-my-posh..." -ForegroundColor Cyan
-try {
+Install-WithFeedback "oh-my-posh" {
     winget install JanDeDobbeleer.OhMyPosh -s winget -e --accept-package-agreements --accept-source-agreements
-    Write-Host "[OK] oh-my-posh installed successfully" -ForegroundColor Green
-} catch {
-    Write-Host "[!] Error installing oh-my-posh: $_" -ForegroundColor Yellow
 }
-
-# === Step 2: Install PSReadLine module for enhanced command line experience
-Write-Host "`n[*] Installing PSReadLine module..." -ForegroundColor Cyan
-try {
+Install-WithFeedback "PSReadLine" {
     Install-Module -Name PSReadLine -AllowClobber -Force -SkipPublisherCheck -Scope CurrentUser
-    Write-Host "[OK] PSReadLine installed successfully" -ForegroundColor Green
-} catch {
-    Write-Host "[!] Error installing PSReadLine: $_" -ForegroundColor Yellow
 }
 
-# === Step 3: Refresh environment variables
+# === Refresh environment
+
 Write-Host "`n🔄 Refreshing environment variables..." -ForegroundColor Cyan
 $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH", "User")
 
-# Explicitly add Pixi bin path if it exists, as it might not be in the registry yet
 $pixiBinPath = Join-Path $HOME ".pixi\envs\nvim\Library\bin"
-if (Test-Path $pixiBinPath) {
-    if ($env:PATH -notlike "*$pixiBinPath*") {
-        Write-Host "Adding Pixi bin path to current session: $pixiBinPath" -ForegroundColor Gray
-        $env:PATH += ";$pixiBinPath"
-    }
+if ((Test-Path $pixiBinPath) -and ($env:PATH -notlike "*$pixiBinPath*")) {
+    Write-Host "Adding Pixi bin path to current session: $pixiBinPath" -ForegroundColor Gray
+    $env:PATH += ";$pixiBinPath"
 }
 
-# === Step 4: Get oh-my-posh themes path
+# === Locate oh-my-posh themes path
+
 Write-Host "`n[*] Getting oh-my-posh themes path..." -ForegroundColor Cyan
 $poshThemesPath = (& oh-my-posh get themes-path).Trim()
 if ($poshThemesPath) {
@@ -70,45 +74,31 @@ if ($poshThemesPath) {
     Write-Host "[!] Could not determine themes path" -ForegroundColor Yellow
 }
 
-# === Step 5: Create PowerShell profile if it doesn't exist
+# === Ensure $PROFILE exists
+
 Write-Host "`n📝 Configuring PowerShell profile..." -ForegroundColor Cyan
 if (-not (Test-Path $PROFILE)) {
     Write-Host "Creating PowerShell profile at: $PROFILE" -ForegroundColor Gray
     New-Item -Path $PROFILE -ItemType File -Force | Out-Null
 }
 
-# === Step 6: Add oh-my-posh initialization to profile if not already present
-$profileContent = Get-Content $PROFILE -ErrorAction SilentlyContinue
-if ($profileContent -notlike "*oh-my-posh*") {
-    Write-Host "Adding oh-my-posh initialization to profile..." -ForegroundColor Gray
-    
-    # Append oh-my-posh initialization
-    $initCommand = 'oh-my-posh init pwsh --config "$env:POSH_THEMES_PATH\zash.omp.json" | Invoke-Expression'
-    Add-Content $PROFILE -Value $initCommand -Encoding UTF8
-    
-    Write-Host "[OK] Profile updated" -ForegroundColor Green
-} else {
-    Write-Host "[OK] oh-my-posh is already configured in the profile." -ForegroundColor Green
-}
+# === oh-my-posh init in $PROFILE
 
+Add-ToProfileOnce -Marker 'oh-my-posh init' `
+    -Content 'oh-my-posh init pwsh --config "$env:POSH_THEMES_PATH\zash.omp.json" | Invoke-Expression' `
+    -Label 'oh-my-posh init'
 
-# === Step 7: Install FiraCode Nerd Font
-Write-Host "`n[*] Installing FiraCode Nerd Font..." -ForegroundColor Cyan
-try {
+# === Font + custom theme
+
+Install-WithFeedback "FiraCode Nerd Font" {
     & oh-my-posh font install FiraCode -Force
-    Write-Host "[OK] FiraCode Nerd Font installed successfully" -ForegroundColor Green
-} catch {
-    Write-Host "[!] Error installing font: $_" -ForegroundColor Yellow
 }
 
-# === Step 8: Create custom zash theme if it doesn't exist
 Write-Host "`n🎨 Setting up custom theme..." -ForegroundColor Cyan
 if ($poshThemesPath) {
     $themeFile = Join-Path $poshThemesPath "zash.omp.json"
-    
     if (-not (Test-Path $themeFile)) {
         Write-Host "Creating custom theme at: $themeFile" -ForegroundColor Gray
-        
         $themeContent = @'
 {
   "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
@@ -156,7 +146,6 @@ if ($poshThemesPath) {
   ]
 }
 '@
-        
         $themeContent | Out-File -FilePath $themeFile -Encoding UTF8
         Write-Host "[OK] Theme created successfully" -ForegroundColor Green
     } else {
@@ -164,36 +153,16 @@ if ($poshThemesPath) {
     }
 }
 
-# === Final Instructions
-Write-Host "`n" -ForegroundColor Green
-Write-Host "╔════════════════════════════════════════════════════════════╗" -ForegroundColor Green
-Write-Host "║              Oh-My-Posh Setup Complete!                   ║" -ForegroundColor Green
-Write-Host "╚════════════════════════════════════════════════════════════╝" -ForegroundColor Green
-Write-Host "`nNext steps:" -ForegroundColor Cyan
-Write-Host "  1. FiraCode Nerd Font has been installed" -ForegroundColor White
-Write-Host "  2. Configure your terminal to use FiraCode Nerd Font" -ForegroundColor White
-Write-Host "  3. Close and reopen PowerShell to see the new theme in action" -ForegroundColor White
+# === Neovim + vim-plug
 
-Write-Host "`nTo view available themes, run:" -ForegroundColor Cyan
-Write-Host "   oh-my-posh get themes" -ForegroundColor Gray
+winget install Neovim.Neovim  # non-Admin install path
 
-Write-Host "`n"
-
-
-# ==== Install nvim plug-in manager ===
-winget install Neovim.Neovim  # To allow non-Admin install of nvim
-
-
-# copy nvim config
 Write-Host "`n[*] Setting up Neovim plug-in manager (vim-plug)..." -ForegroundColor Cyan
-# copy .config/nvim/init.vim to ~/.config/nvim/init.vim
-$sourceNvimConfig = ".\.config\nvim\init.vim"
 $destNvimConfigDir = "$HOME\.config\nvim"
-$destNvimConfig = Join-Path $destNvimConfigDir "init.vim"
 if (-not (Test-Path $destNvimConfigDir)) {
     New-Item -ItemType Directory -Path $destNvimConfigDir -Force | Out-Null
 }
-Copy-Item -Path $sourceNvimConfig -Destination $destNvimConfig -Force
+Copy-Item -Path ".\.config\nvim\init.vim" -Destination (Join-Path $destNvimConfigDir "init.vim") -Force
 Write-Host "[OK] Neovim configuration copied successfully" -ForegroundColor Green
 
 $plugVimPath = "$HOME\.local\share\nvim\site\autoload\plug.vim"
@@ -201,35 +170,24 @@ $plugVimDir = Split-Path $plugVimPath -Parent
 if (-not (Test-Path $plugVimDir)) {
     New-Item -ItemType Directory -Path $plugVimDir -Force | Out-Null
 }
-
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim" -OutFile $plugVimPath
 Write-Host "[OK] vim-plug installed successfully" -ForegroundColor Green
 
-# Verify nvim is obtainable before running
-$nvimExe = Get-Command nvim -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue
-
-# Set alias in powershell profile
-if ($nvimExe) {
-    if ($profileContent -notlike "*alias vim=nvim*") {
-        Write-Host "Adding alias 'vim=nvim' to PowerShell profile..." -ForegroundColor Gray
-        Add-Content $PROFILE -Value 'Set-Alias vim nvim' -Encoding UTF8
-
-        Write-Host "[OK] Alias added to profile" -ForegroundColor Green
-    } else {        
-        Write-Host "[OK] Alias 'vim=nvim' already exists in profile." -ForegroundColor Green
-    }
+if (Get-Command nvim -ErrorAction SilentlyContinue) {
+    Add-ToProfileOnce -Marker 'Set-Alias vim nvim' `
+        -Content 'Set-Alias vim nvim' `
+        -Label "alias 'vim=nvim'"
 } else {
     Write-Host "[!] nvim executable not found. Skipping alias setup." -ForegroundColor Yellow
 }
 
-# ===== tmux [psmux] setup =====
+# === tmux for Windows
+
 choco install psmux -y
 
+# === PSReadLine config
 
-# ===== auto suggest / auto complete setup =====
 Write-Host "`n[*] Configuring PSReadLine (IntelliSense)..." -ForegroundColor Cyan
-
-# Commands to add to profile
 $psReadlineConfig = @'
 # PSReadLine Autocomplete
 if (Get-Command Set-PSReadLineOption -ErrorAction SilentlyContinue) {
@@ -238,17 +196,11 @@ if (Get-Command Set-PSReadLineOption -ErrorAction SilentlyContinue) {
     Set-PSReadLineOption -PredictionViewStyle InlineView
 }
 '@
+Add-ToProfileOnce -Marker 'Set-PSReadLineOption -PredictionSource' `
+    -Content "`n$psReadlineConfig" `
+    -Label 'PSReadLine config'
 
-# Check and add to profile
-$currentProfile = Get-Content $PROFILE -ErrorAction SilentlyContinue
-if ($currentProfile -notlike "*Set-PSReadLineOption -PredictionSource*") {
-    Add-Content $PROFILE -Value "`n$psReadlineConfig" -Encoding UTF8
-    Write-Host "[OK] Added PSReadLine config to profile" -ForegroundColor Green
-}
-
-# Apply for current session to verify
 try {
-    # Fix: -PredictionColor parameter is invalid, use -Colors hashtable
     Set-PSReadLineOption -PredictionSource History
     Set-PSReadLineOption -Colors @{ InlinePrediction = 'DarkGreen' }
     Set-PSReadLineOption -PredictionViewStyle InlineView
@@ -257,20 +209,41 @@ try {
     Write-Host "[!] Error setting PSReadLine options: $_" -ForegroundColor Yellow
 }
 
-# ====== Additionals ======
+# === Additional pixi packages
+
 pixi global install ripgrep eza gcc gxx make cmake
 
+# === Linux/Unix utility aliases (idempotent — won't duplicate on re-run)
 
-# --------- copy aliases----------- 
-# === Linux/Unix Utility Aliases ===
-# Use functions instead of aliases for built-in aliases to override AllScope restrictions
-Add-Content $PROFILE -Value 'function cp { Copy-Item @args }' -Encoding UTF8         # 'cp source dest'
-Add-Content $PROFILE -Value 'function mv { Move-Item @args }' -Encoding UTF8        # 'mv source dest'
-Add-Content $PROFILE -Value 'function rm { Remove-Item @args }' -Encoding UTF8      # 'rm file_or_folder'
-Add-Content $PROFILE -Value 'function ls { Get-ChildItem @args }' -Encoding UTF8        # 'ls' for directory listing
-Add-Content $PROFILE -Value 'function cat { Get-Content @args }' -Encoding UTF8    # 'cat file.txt' to view file content
-Add-Content $PROFILE -Value 'function pwd { Get-Location }' -Encoding UTF8    # 'pwd' to print working directory
-Add-Content $PROFILE -Value 'function cd.. { Set-Location .. }' -Encoding UTF8    # 'cd..' to go up one directory
-Add-Content $PROFILE -Value 'Set-Alias -Name grep -Value Select-String -Force -Scope Global' -Encoding UTF8  # 'grep "pattern" file.txt'
-Add-Content $PROFILE -Value 'function clear { Clear-Host }' -Encoding UTF8        # 'clear' screen
-Write-Host "[OK] Added common Linux/Unix utility aliases to profile" -ForegroundColor Green 
+$linuxAliases = @(
+    'function cp { Copy-Item @args }',
+    'function mv { Move-Item @args }',
+    'function rm { Remove-Item @args }',
+    'function ls { Get-ChildItem @args }',
+    'function cat { Get-Content @args }',
+    'function pwd { Get-Location }',
+    'function cd.. { Set-Location .. }',
+    'Set-Alias -Name grep -Value Select-String -Force -Scope Global',
+    'function clear { Clear-Host }'
+)
+$existing = Get-Content $PROFILE -ErrorAction SilentlyContinue
+foreach ($line in $linuxAliases) {
+    if ($existing -notlike "*$line*") {
+        Add-Content $PROFILE -Value $line -Encoding UTF8
+    }
+}
+Write-Host "[OK] Linux/Unix utility aliases configured" -ForegroundColor Green
+
+# === Final banner
+
+Write-Host "`n" -ForegroundColor Green
+Write-Host "╔════════════════════════════════════════════════════════════╗" -ForegroundColor Green
+Write-Host "║              Oh-My-Posh Setup Complete!                   ║" -ForegroundColor Green
+Write-Host "╚════════════════════════════════════════════════════════════╝" -ForegroundColor Green
+Write-Host "`nNext steps:" -ForegroundColor Cyan
+Write-Host "  1. FiraCode Nerd Font has been installed" -ForegroundColor White
+Write-Host "  2. Configure your terminal to use FiraCode Nerd Font" -ForegroundColor White
+Write-Host "  3. Close and reopen PowerShell to see the new theme in action" -ForegroundColor White
+Write-Host "`nTo view available themes, run:" -ForegroundColor Cyan
+Write-Host "   oh-my-posh get themes" -ForegroundColor Gray
+Write-Host "`n"
