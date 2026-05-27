@@ -20,6 +20,22 @@ if has('wsl') && executable('win32yank.exe')
     \   'copy':  { '+': 'win32yank.exe -i --crlf', '*': 'win32yank.exe -i --crlf' },
     \   'paste': { '+': 'win32yank.exe -o --lf',  '*': 'win32yank.exe -o --lf'  },
     \ }
+" Remote SSH (bare Linux, no DISPLAY): use OSC 52 so yanks reach the
+" local terminal's clipboard. Most terminals only implement OSC 52 copy,
+" not paste — so pasting INTO vim usually still needs terminal paste
+" (Ctrl-Shift-V) or a register that has the data already.
+elseif !empty($SSH_TTY) && has('nvim-0.10')
+  let g:clipboard = {
+    \ 'name': 'OSC 52',
+    \ 'copy': {
+    \   '+': v:lua.require('vim.ui.clipboard.osc52').copy('+'),
+    \   '*': v:lua.require('vim.ui.clipboard.osc52').copy('*'),
+    \ },
+    \ 'paste': {
+    \   '+': v:lua.require('vim.ui.clipboard.osc52').paste('+'),
+    \   '*': v:lua.require('vim.ui.clipboard.osc52').paste('*'),
+    \ },
+  \ }
 endif
 :set cursorline   " highlight current cursorline
 :set ttyfast      " seepd up scrorring in Vim

@@ -69,6 +69,8 @@ This repo sets `clipboard=unnamedplus` in `init.vim`, so the **default register 
 
 > **Gotcha 2 — `^M` at end of every pasted line.** That means the paste bypassed `g:clipboard`. The usual cause is `Ctrl-Shift-V` (terminal paste) in **insert mode**, which sends raw bytes — so CRLF from a Windows source (VSCode, Notepad) survives. Fix: paste with `p` in normal mode or `Ctrl-R +` in insert mode — both use `win32yank -o --lf` which strips the CR. To clean an already-polluted file: `:%s/\r$//` (trailing CR) or `:%s/\r//g` (everywhere).
 
+> **Gotcha 3 — `clipboard: No provider` on a remote server.** This means nvim couldn't find a clipboard tool (no xclip / wl-copy / DISPLAY). On SSH sessions the included `init.vim` falls back to **OSC 52** (nvim ≥ 0.10), which pipes yanks back through the terminal to your *local* clipboard. After updating, just `yy` and the line should be on your laptop's clipboard. Paste *into* vim from outside still needs terminal paste (Ctrl-Shift-V) — OSC 52 read is almost never supported by terminals.
+
 ### Custom mappings (this repo's `init.vim`)
 | Key | Action |
 |---|---|
