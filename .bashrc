@@ -155,6 +155,12 @@ export PATH=$GOPATH/bin:$GOROOT/bin:$HOME/.local/bin:$PATH
 
 export PATH="~/.pixi/bin:$PATH"
 
+# --- AI autocomplete (minuet-ai.nvim, local OpenAI-compatible model) ---
+# minuet requires both env vars to be set, even when the backend (e.g. vLLM)
+# does not actually enforce the bearer token. Discover the model id with:
+#   curl -s http://localhost:8000/v1/models | jq -r '.data[].id'
+export MINUET_API_KEY="${MINUET_API_KEY:-dummy}"
+export MINUET_MODEL="${MINUET_MODEL:-YOUR_MODEL_NAME}"
 
 # Just incase zsh is not installed and local install via pixi
 # then add shell and redirect to zsh default
