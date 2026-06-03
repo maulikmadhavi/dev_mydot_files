@@ -9,7 +9,7 @@ export ZSH="$HOME/.oh-my-zsh"
 # load a random theme each time Oh My Zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-ZSH_THEME="alanpeabody"
+ZSH_THEME="maulik"
 
 # Set list of themes to pick from when loading at random
 # Setting this variable when ZSH_THEME=random will cause zsh to load
@@ -145,3 +145,5 @@ export FZF_BASE="$HOME/.pixi/bin/fzf"
 #   curl -s http://localhost:8000/v1/models | jq -r '.data[].id'
 export MINUET_API_KEY="${MINUET_API_KEY:-dummy}"
 export MINUET_MODEL="${MINUET_MODEL:-YOUR_MODEL_NAME}"
+
+export PATH="/home/maulik/.pixi/bin:$PATH"

@@ -119,11 +119,14 @@ call plug#end()
 " ============================================================
 lua << EOF
 local ok_cmp, cmp           = pcall(require, 'cmp')
-local ok_lsp, lspconfig     = pcall(require, 'lspconfig')
 local ok_minuet, minuet     = pcall(require, 'minuet')
 local ok_cmplsp, cmp_nvim_lsp = pcall(require, 'cmp_nvim_lsp')
+-- nvim-lspconfig is required only as a *source of default server configs*
+-- (it ships `lsp/<server>.lua` files picked up by nvim 0.11's vim.lsp.config).
+-- We don't call into its deprecated framework API. Presence-check via rtp:
+local lspconfig_present = #vim.api.nvim_get_runtime_file('lsp/pylsp.lua', false) > 0
 
-if not (ok_cmp and ok_lsp and ok_minuet and ok_cmplsp) then
+if not (ok_cmp and ok_minuet and ok_cmplsp and lspconfig_present) then
   vim.schedule(function()
     vim.notify('AI/LSP plugins missing — run :PlugInstall and restart nvim',
                vim.log.levels.WARN)
@@ -176,8 +179,11 @@ cmp.setup({
   performance = { fetching_timeout = 2000 },
 })
 
-lspconfig.pylsp.setup({
+-- nvim 0.11+ API: vim.lsp.config merges over the defaults in lsp/pylsp.lua
+-- (provided by nvim-lspconfig on the rtp); vim.lsp.enable starts the client.
+vim.lsp.config('pylsp', {
   capabilities = cmp_nvim_lsp.default_capabilities(),
 })
+vim.lsp.enable('pylsp')
 EOF
 
