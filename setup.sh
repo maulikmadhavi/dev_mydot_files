@@ -126,22 +126,25 @@ fi
 
 step_complete
 
-# AI autocomplete advisory: minuet-ai.nvim is installed via the new Plug lines
-# in init.vim, but it needs $MINUET_MODEL to match a model your local server
-# actually serves. Defaults to YOUR_MODEL_NAME (a placeholder) in .zshrc/.bashrc.
-if curl -fsS -m 1 http://localhost:8000/v1/models >/dev/null 2>&1; then
-    MODELS="$(curl -fsS -m 1 http://localhost:8000/v1/models 2>/dev/null \
-              | python3 -c 'import json,sys; [print(m["id"]) for m in json.load(sys.stdin).get("data", [])]' 2>/dev/null)"
-    if [ -n "$MODELS" ]; then
-        echo "Detected local OpenAI-compatible server on :8000. Served model(s):"
-        echo "$MODELS" | sed 's/^/    /'
-        echo "To use one for nvim AI autocomplete, set in your shell:"
-        echo "    export MINUET_MODEL=<id-from-above>"
-    fi
-else
-    echo "Note: nvim AI autocomplete (minuet-ai.nvim) expects an OpenAI-compatible"
-    echo "      server on http://localhost:8000. None detected right now — that's"
-    echo "      fine; start one later and set MINUET_MODEL to your served model id."
-fi
+mkdir -p "$HOME/.oh-my-zsh/custom/themes"
+cp -f "oh-my-zsh-custom/themes/"*.zsh-theme "$HOME/.oh-my-zsh/custom/themes/"
+
+# # AI autocomplete advisory: minuet-ai.nvim is installed via the new Plug lines
+# # in init.vim, but it needs $MINUET_MODEL to match a model your local server
+# # actually serves. Defaults to YOUR_MODEL_NAME (a placeholder) in .zshrc/.bashrc.
+# if curl -fsS -m 1 http://localhost:8000/v1/models >/dev/null 2>&1; then
+#     MODELS="$(curl -fsS -m 1 http://localhost:8000/v1/models 2>/dev/null \
+#               | python3 -c 'import json,sys; [print(m["id"]) for m in json.load(sys.stdin).get("data", [])]' 2>/dev/null)"
+#     if [ -n "$MODELS" ]; then
+#         echo "Detected local OpenAI-compatible server on :8000. Served model(s):"
+#         echo "$MODELS" | sed 's/^/    /'
+#         echo "To use one for nvim AI autocomplete, set in your shell:"
+#         echo "    export MINUET_MODEL=<id-from-above>"
+#     fi
+# else
+#     echo "Note: nvim AI autocomplete (minuet-ai.nvim) expects an OpenAI-compatible"
+#     echo "      server on http://localhost:8000. None detected right now — that's"
+#     echo "      fine; start one later and set MINUET_MODEL to your served model id."
+# fi
 
 echo "Please restart your terminal."
