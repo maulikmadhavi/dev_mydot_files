@@ -118,7 +118,7 @@ fi
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$(''/home/maulik/miniconda3/bin/conda'' 'shell.bash' 'hook' 2> /dev/null)"
+__conda_setup="$("/home/maulik/miniconda3/bin/conda" 'shell.bash' 'hook' 2> /dev/null)"
 if [ $? -eq 0 ]; then
     eval "$__conda_setup"
 else
@@ -134,7 +134,7 @@ unset __conda_setup
 # >>> cuda initialize >>>
 export PATH=/usr/local/cuda-11.2/bin:$PATH
 export LD_LIBRARY_PATH=/usr/local/cuda-11.2/lib64:$LD_LIBRARY_PATH
-export PATH="$PATH:~/Documents/development/flutter/bin"
+export PATH="$PATH:$HOME/Documents/development/flutter/bin"
 
 
 # For secret file [This file needs to be shared manually]
