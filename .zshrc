@@ -113,7 +113,6 @@ alias vim=nvim
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 #
-export PATH="~/.pixi/bin:$PATH"
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
@@ -138,10 +137,7 @@ node() { unfunction node; [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"; node
 npm() { unfunction npm; [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"; npm "$@" }
 npx() { unfunction npx; [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"; npx "$@" }
 
-export PATH="~/.pixi/bin:$PATH"
 export FZF_BASE=~/.pixi/bin/fzf
-
-export PATH="/home/maulik/.pixi/bin:$PATH"
 
 # --- AI autocomplete (minuet-ai.nvim, local OpenAI-compatible model) ---
 # minuet requires both env vars to be set, even when the backend (e.g. vLLM)
