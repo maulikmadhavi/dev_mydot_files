@@ -118,7 +118,7 @@ fi
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/home/maulik/miniconda3/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
+__conda_setup="$(''/home/maulik/miniconda3/bin/conda'' 'shell.bash' 'hook' 2> /dev/null)"
 if [ $? -eq 0 ]; then
     eval "$__conda_setup"
 else
@@ -153,7 +153,7 @@ export GOPATH=$HOME/go
 # Update PATH to include GOPATH and GOROOT binaries
 export PATH=$GOPATH/bin:$GOROOT/bin:$HOME/.local/bin:$PATH
 
-export PATH="~/.pixi/bin:$PATH"
+export PATH="$HOME/.pixi/bin:$PATH"
 
 # --- AI autocomplete (minuet-ai.nvim, local OpenAI-compatible model) ---
 # minuet requires both env vars to be set, even when the backend (e.g. vLLM)
@@ -169,4 +169,3 @@ export MINUET_MODEL="${MINUET_MODEL:-YOUR_MODEL_NAME}"
 
 export SHELL=zsh
 exec $SHELL -l
-export PATH="/home/maulik/.pixi/bin:$PATH"
