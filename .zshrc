@@ -147,3 +147,20 @@ export MINUET_API_KEY="${MINUET_API_KEY:-dummy}"
 export MINUET_MODEL="${MINUET_MODEL:-YOUR_MODEL_NAME}"
 
 export PATH="/home/maulik/.pixi/bin:$PATH"
+# ---------------------- one liner ----------------------
+fixspaces() {
+    find "$1" -depth -name "* *" | while IFS= read -r f; do
+        dir=$(dirname "$f")
+        base=$(basename "$f")
+        mv "$f" "$dir/${base// /-}"
+    done
+}
+
+
+fixspaces_preview() {
+    find "$1" -depth -name "* *" | while IFS= read -r f; do
+        dir=$(dirname "$f")
+        base=$(basename "$f")
+        echo mv "$f" "$dir/${base// /-}"
+    done
+}
