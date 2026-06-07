@@ -167,5 +167,15 @@ export MINUET_MODEL="${MINUET_MODEL:-YOUR_MODEL_NAME}"
 
 [[ -s $HOME/.autojump/etc/profile.d/autojump.sh ]] && source $HOME/.autojump/etc/profile.d/autojump.sh
 
+
+
+# -------------  My oneliner --------------------
+
+fixspaces(){ find "$1" -depth -name "* *" -exec bash -c 'for f; do mv "$f" "${f// /-}"; done' _ {} +; }
+
+fixspaces_preview(){ find "$1" -depth -name "* *" -exec bash -c 'for f; do echo mv "$f" "${f// /-}"; done' _ {} +; }
+
+# --------------------- 
+
 export SHELL=zsh
 exec $SHELL -l
