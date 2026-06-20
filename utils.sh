@@ -12,6 +12,48 @@
 # Can also be run directly as a dispatcher: ./utils.sh <function> [args...]
 
 # -----------------------------------------------------------------------------
+# _progress_bar <current> <total> [label]   (private helper)
+#   Draws/updates a single-line progress bar on stderr. No-op when stderr is
+#   not a terminal, so piped/scripted output stays clean.
+# -----------------------------------------------------------------------------
+_progress_bar() {
+    [ -t 2 ] || return 0
+    local cur=$1 total=$2 label=${3:-}
+    local width=40
+    local hashes="########################################"   # 40 '#'
+    local spaces="                                        "    # 40 ' '
+    local pct=0 filled=0
+    if [ "${total:-0}" -gt 0 ] 2>/dev/null; then
+        pct=$(( cur * 100 / total ))
+        filled=$(( pct * width / 100 ))
+    fi
+    printf '\r%s [%s%s] %3d%% (%d/%d)' \
+        "$label" "${hashes:0:filled}" "${spaces:0:$((width - filled))}" \
+        "$pct" "$cur" "$total" >&2
+}
+
+# -----------------------------------------------------------------------------
+# _hash_tree <dir> <total> <label> <hasher> [jobs]   (private helper)
+#   Prints a sorted "<hash>  ./path" manifest of every file under <dir> to
+#   stdout, while animating a progress bar on stderr as files complete.
+#   Hashing runs in parallel across <jobs> processes (default 1). -print0/-0
+#   keep filenames with spaces or newlines safe.
+# -----------------------------------------------------------------------------
+_hash_tree() {
+    local dir=$1 total=$2 label=$3 hasher=$4 jobs=${5:-1}
+    local tmp count=0 line
+    tmp=$(mktemp) || return 1
+    while IFS= read -r line; do
+        printf '%s\n' "$line" >> "$tmp"
+        count=$(( count + 1 ))
+        _progress_bar "$count" "$total" "$label"
+    done < <(cd "$dir" && find . -type f -print0 | xargs -0 -r -P"$jobs" "$hasher")
+    [ -t 2 ] && printf '\n' >&2
+    sort -k2 "$tmp"
+    rm -f "$tmp"
+}
+
+# -----------------------------------------------------------------------------
 # compare_directories <source_dir> <target_dir>
 #   Deep-compare two directories: structure, file lists, counts, total size and
 #   per-file checksums. Returns 0 if identical, 1 if they differ.
@@ -90,11 +132,11 @@ compare_directories() {
         echo "✓ Directory sizes match"
     fi
 
-    # 5. Compare file contents using checksums
+    # 5. Compare file contents using checksums (with progress bar)
     echo -e "\n[5/5] Checking file contents (checksums)..."
     local source_checksums target_checksums
-    source_checksums=$(cd "$source_dir" && find . -type f -exec md5sum {} \; | sort -k 2)
-    target_checksums=$(cd "$target_dir" && find . -type f -exec md5sum {} \; | sort -k 2)
+    source_checksums=$(_hash_tree "$source_dir" "$source_count" "      source" md5sum)
+    target_checksums=$(_hash_tree "$target_dir" "$target_count" "      target" md5sum)
 
     if diff <(echo "$source_checksums") <(echo "$target_checksums"); then
         echo "✓ File contents match"
@@ -200,15 +242,19 @@ compare_fast_directories() {
     local jobs
     jobs=$(nproc 2>/dev/null || echo 4)
 
-    echo "Comparing (hash=$hasher, parallel jobs=$jobs)"
-    echo "Source: $source_dir"
-    echo "Target: $target_dir"
+    local source_total target_total
+    source_total=$(find "$source_dir" -type f | wc -l)
+    target_total=$(find "$target_dir" -type f | wc -l)
 
-    # Hash each tree with relative paths, in parallel, sorted by path so the
-    # diff lines up. -print0/-0 keeps filenames with spaces/newlines safe.
+    echo "Comparing (hash=$hasher, parallel jobs=$jobs)"
+    echo "Source: $source_dir ($source_total files)"
+    echo "Target: $target_dir ($target_total files)"
+
+    # Hash each tree in parallel with a live progress bar; manifests are sorted
+    # by path so the diff lines up. -print0/-0 keep odd filenames safe.
     local source_sums target_sums
-    source_sums=$(cd "$source_dir" && find . -type f -print0 | xargs -0 -r -P"$jobs" "$hasher" | sort -k2)
-    target_sums=$(cd "$target_dir" && find . -type f -print0 | xargs -0 -r -P"$jobs" "$hasher" | sort -k2)
+    source_sums=$(_hash_tree "$source_dir" "$source_total" "  source" "$hasher" "$jobs")
+    target_sums=$(_hash_tree "$target_dir" "$target_total" "  target" "$hasher" "$jobs")
 
     if diff <(echo "$source_sums") <(echo "$target_sums"); then
         echo "✓ SUCCESS: Directory contents are identical"
