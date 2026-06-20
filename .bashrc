@@ -105,6 +105,9 @@ if [ -f ~/.bash_aliases ]; then
     . ~/.bash_aliases
 fi
 
+# Personal shell utility functions (compare_directories, custom_rsync, ...)
+[ -f ~/utils.sh ] && source ~/utils.sh
+
 # enable programmable completion features (you don't need to enable
 # this, if it's already enabled in /etc/bash.bashrc and /etc/profile
 # sources /etc/bash.bashrc).

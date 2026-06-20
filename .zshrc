@@ -84,6 +84,10 @@ ZSH_DISABLE_COMPFIX=true
 source $ZSH/oh-my-zsh.sh
 
 alias vim=nvim
+
+# Personal shell utility functions (compare_directories, custom_rsync, ...)
+[ -f ~/utils.sh ] && source ~/utils.sh
+
 # User configuration
 
 # export MANPATH="/usr/local/man:$MANPATH"
