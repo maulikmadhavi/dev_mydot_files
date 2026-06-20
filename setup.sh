@@ -4,6 +4,13 @@
 cd "$(dirname "$0")"
 REPO_DIR="$(pwd)"
 
+# Self-update: pull latest dotfiles so a re-run on any machine picks up new
+# files (e.g. utils.sh). Skipped if not a git checkout or pull fails (offline).
+if [ -d "$REPO_DIR/.git" ]; then
+    git -C "$REPO_DIR" pull --ff-only 2>/dev/null \
+        || echo "Note: could not 'git pull' (offline or diverged); continuing with the current checkout."
+fi
+
 # === Progress display
 
 STEPS=(
@@ -93,7 +100,21 @@ ln -sfn "$REPO_DIR/.oh-my-zsh" "$HOME/.oh-my-zsh"
 # === 6. Stow dotfiles
 
 step
-stow --target="$HOME" . --adopt
+# Remove stray symlinks in $HOME that point back into this repo but were NOT
+# created by stow (older `ln -s` installs used absolute targets). Stow treats
+# these as "not owned by stow" and aborts the whole run, so clear them first.
+# Only symlinks are removed — never real files.
+while IFS= read -r link; do
+    target="$(readlink "$link")"
+    case "$target" in
+        "$REPO_DIR"/*) echo "Removing stale symlink: $link"; rm -f "$link" ;;
+    esac
+done < <(find "$HOME" -maxdepth 3 \
+            -path "$REPO_DIR" -prune -o \
+            -path "$HOME/.oh-my-zsh" -prune -o \
+            -type l -print 2>/dev/null)
+
+stow --target="$HOME" --restow . --adopt
 
 # === 7. zsh plugins
 
