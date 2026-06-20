@@ -198,6 +198,66 @@ custom_rsync() {
 }
 
 # -----------------------------------------------------------------------------
+# fast_rsync <source> <target> [extra rsync args...]
+#   Fast ONE-WAY sync: copy <source>'s contents into <target>, transferring
+#   only files that differ. Shows a bounded dry-run preview (what would change),
+#   then asks before doing the real sync.
+#   - SAFE BY DEFAULT: never deletes files that exist only in <target>. Pass
+#     --delete explicitly if you want <target> to become an exact mirror.
+#   - A trailing slash is forced on <source> so its CONTENTS land in <target>
+#     (rsync's slash rule), making the mismatch behaviour predictable.
+#   - Uses -W (whole-file): skips delta computation, faster for local/mounted
+#     (e.g. NAS) copies where reading both sides costs more than resending.
+# -----------------------------------------------------------------------------
+fast_rsync() {
+    local source="$1"
+    local target="$2"
+    shift 2 2>/dev/null
+
+    if [[ -z "$source" || -z "$target" ]]; then
+        echo "Usage: fast_rsync <source> <target> [extra rsync args... e.g. --delete]"
+        return 2
+    fi
+    if [[ ! -d "$source" ]]; then
+        echo "ERROR: source '$source' does not exist or is not a directory"
+        return 2
+    fi
+
+    # Force exactly one trailing slash so source CONTENTS sync into target.
+    source="${source%/}/"
+    mkdir -p "$target"
+
+    # Shared sync semantics (incl. any user args like --delete) so the preview
+    # matches the real run. Progress output is added only to the real run.
+    local sync_opts=(-a "$@")
+
+    echo "Scanning for differences (dry run, no changes yet)..."
+    local preview n
+    # Clean itemized preview: only real change lines, no transfer-progress noise.
+    preview=$(rsync --dry-run --itemize-changes "${sync_opts[@]}" "$source" "$target" 2>/dev/null \
+                | grep -vE '^(\.[df]\.\.t\.+ \./?$|$)')
+    if [[ -z "$preview" ]]; then
+        echo "✓ Already in sync — nothing to copy."
+        return 0
+    fi
+    n=$(printf '%s\n' "$preview" | grep -c .)
+    echo "$n change(s) would be applied to target (source -> target):"
+    printf '%s\n' "$preview" | head -100
+    [[ $n -gt 100 ]] && echo "... ($n total; showing first 100)"
+
+    printf 'Proceed with the real one-way sync source -> target? [y/N] '
+    local reply
+    read -r reply
+    if [[ "$reply" == [Yy]* ]]; then
+        # -W (whole-file) + progress2 for a fast, progress-tracked real copy.
+        rsync "${sync_opts[@]}" -h --info=progress2 --partial -W "$source" "$target"
+    else
+        echo "Aborted."
+        return 1
+    fi
+}
+
+# -----------------------------------------------------------------------------
 # fixspaces <dir>
 #   Recursively rename files and directories under <dir>, replacing every space
 #   in their names with a dash.
@@ -290,6 +350,7 @@ if [[ -n "${BASH_VERSION:-}" && "${BASH_SOURCE[0]}" == "${0}" ]]; then
         echo "  compare_directories <source_dir> <target_dir>"
         echo "  compare_fast_directories <source_dir> <target_dir>"
         echo "  custom_rsync <source> <target> [extra rsync args...]"
+        echo "  fast_rsync <source> <target> [extra rsync args... e.g. --delete]"
         echo "  fixspaces <dir>"
         echo "  fixspaces_preview <dir>"
         exit 2
