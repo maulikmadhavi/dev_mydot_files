@@ -41,16 +41,26 @@ _progress_bar() {
 # -----------------------------------------------------------------------------
 _hash_tree() {
     local dir=$1 total=$2 label=$3 hasher=$4 jobs=${5:-1}
-    local tmp count=0 line
-    tmp=$(mktemp) || return 1
-    while IFS= read -r line; do
-        printf '%s\n' "$line" >> "$tmp"
-        count=$(( count + 1 ))
-        _progress_bar "$count" "$total" "$label"
-    done < <(cd "$dir" && find . -type f -print0 | xargs -0 -r -P"$jobs" "$hasher")
-    [ -t 2 ] && printf '\n' >&2
-    sort -k2 "$tmp"
-    rm -f "$tmp"
+    local raw
+    raw=$(mktemp) || return 1
+    # Hash into a regular file, not a pipe. A file reader never "goes away", so
+    # the hasher processes can't get a closed stdout — this avoids the
+    # "failed printing to stdout: Broken pipe" panics that Rust hashers
+    # (b3sum/xxhsum) throw when a downstream consumer (e.g. `head`) exits early.
+    ( cd "$dir" && find . -type f -print0 | xargs -0 -r -P"$jobs" "$hasher" >"$raw" ) &
+    local pid=$!
+    if [ -t 2 ]; then
+        # Sample progress from the growing manifest until hashing finishes.
+        while kill -0 "$pid" 2>/dev/null; do
+            _progress_bar "$(wc -l <"$raw" 2>/dev/null || echo 0)" "$total" "$label"
+            sleep 0.2
+        done
+        _progress_bar "$total" "$total" "$label"
+        printf '\n' >&2
+    fi
+    wait "$pid"
+    sort -k2 "$raw"
+    rm -f "$raw"
 }
 
 # -----------------------------------------------------------------------------
@@ -256,13 +266,17 @@ compare_fast_directories() {
     source_sums=$(_hash_tree "$source_dir" "$source_total" "  source" "$hasher" "$jobs")
     target_sums=$(_hash_tree "$target_dir" "$target_total" "  target" "$hasher" "$jobs")
 
-    if diff <(echo "$source_sums") <(echo "$target_sums"); then
+    local delta n
+    delta=$(diff <(printf '%s\n' "$source_sums") <(printf '%s\n' "$target_sums"))
+    if [ -z "$delta" ]; then
         echo "✓ SUCCESS: Directory contents are identical"
         return 0
-    else
-        echo "❌ FAILURE: Directory contents differ (see diff above)"
-        return 1
     fi
+    n=$(printf '%s\n' "$delta" | grep -c '^[<>]')
+    echo "❌ FAILURE: $n differing file entries (source=<, target=>):"
+    printf '%s\n' "$delta" | grep '^[<>]' | head -100
+    [ "$n" -gt 100 ] && echo "... ($n total; showing first 100)"
+    return 1
 }
 
 # -----------------------------------------------------------------------------
