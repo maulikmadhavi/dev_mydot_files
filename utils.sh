@@ -147,6 +147,21 @@ custom_rsync() {
 }
 
 # -----------------------------------------------------------------------------
+# fixspaces <dir>
+#   Recursively rename files and directories under <dir>, replacing every space
+#   in their names with a dash.
+#   NOTE: ${f// /-} rewrites spaces in the WHOLE path, so an entry fails to move
+#   if one of its parent directories still has a space (renamed later, due to
+#   -depth). Reliable when only leaf names contain spaces; otherwise run it more
+#   than once, or rename only the basename.
+# fixspaces_preview <dir>
+#   Same as fixspaces but only prints the mv commands without running them.
+# -----------------------------------------------------------------------------
+fixspaces(){ find "$1" -depth -name "* *" -exec bash -c 'for f; do mv "$f" "${f// /-}"; done' _ {} +; }
+
+fixspaces_preview(){ find "$1" -depth -name "* *" -exec bash -c 'for f; do echo mv "$f" "${f// /-}"; done' _ {} +; }
+
+# -----------------------------------------------------------------------------
 # When executed directly (not sourced), act as a dispatcher:
 #   ./utils.sh compare_directories ~/a ~/b
 # Sourcing the file (from .zshrc/.bashrc) only defines the functions above.
@@ -157,6 +172,8 @@ if [[ -n "${BASH_VERSION:-}" && "${BASH_SOURCE[0]}" == "${0}" ]]; then
         echo "Available functions:"
         echo "  compare_directories <source_dir> <target_dir>"
         echo "  custom_rsync <source> <target> [extra rsync args...]"
+        echo "  fixspaces <dir>"
+        echo "  fixspaces_preview <dir>"
         exit 2
     fi
     "$@"
