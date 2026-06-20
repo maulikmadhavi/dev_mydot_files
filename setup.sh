@@ -61,6 +61,13 @@ curl -fsSL https://pixi.sh/install.sh | bash
 export PATH="$HOME/.pixi/bin:$PATH"
 pixi global install tmux yarn git nvim zsh python-lsp-server stow tree fzf diskus xclip
 
+# Fast hashers for compare_fast_directories (utils.sh). Best-effort and in
+# their own commands: b3sum has no linux-aarch64 conda build, so it must not
+# abort the bootstrap on ARM. xxhash (xxh128sum/xxhsum) covers all platforms;
+# utils.sh falls back to sha1sum/md5sum if neither is present.
+pixi global install xxhash 2>/dev/null || echo "Note: xxhash unavailable; compare_fast_directories will fall back to sha1sum/md5sum."
+pixi global install b3sum  2>/dev/null || echo "Note: b3sum unavailable on this platform (e.g. linux-aarch64); using xxhash/sha1sum instead."
+
 # === 2. Clean conflicting configs
 
 step
