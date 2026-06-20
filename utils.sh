@@ -19,17 +19,16 @@
 _progress_bar() {
     [ -t 2 ] || return 0
     local cur=$1 total=$2 label=${3:-}
-    local width=40
-    local hashes="########################################"   # 40 '#'
-    local spaces="                                        "    # 40 ' '
-    local pct=0 filled=0
+    local width=40 pct=0 filled=0 i bar='' empty=''
     if [ "${total:-0}" -gt 0 ] 2>/dev/null; then
         pct=$(( cur * 100 / total ))
         filled=$(( pct * width / 100 ))
     fi
-    printf '\r%s [%s%s] %3d%% (%d/%d)' \
-        "$label" "${hashes:0:filled}" "${spaces:0:$((width - filled))}" \
-        "$pct" "$cur" "$total" >&2
+    # Build the bar with a loop instead of substring slicing: zsh misparses
+    # ${var:0:LEN} as a history modifier when LEN is a variable/expression.
+    for (( i = 0; i < filled; i++ )); do bar="$bar#"; done
+    for (( i = filled; i < width; i++ )); do empty="$empty-"; done
+    printf '\r%s [%s%s] %3d%% (%d/%d)' "$label" "$bar" "$empty" "$pct" "$cur" "$total" >&2
 }
 
 # -----------------------------------------------------------------------------
