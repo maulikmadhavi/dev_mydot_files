@@ -162,6 +162,64 @@ fixspaces(){ find "$1" -depth -name "* *" -exec bash -c 'for f; do mv "$f" "${f/
 fixspaces_preview(){ find "$1" -depth -name "* *" -exec bash -c 'for f; do echo mv "$f" "${f// /-}"; done' _ {} +; }
 
 # -----------------------------------------------------------------------------
+# compare_fast_directories <source_dir> <target_dir>
+#   Fast, reliable content comparison of two directory trees. Hashes every file
+#   in parallel (one process per core) using the fastest available tool
+#   (b3sum > xxh128sum > xxhsum > sha1sum > md5sum), then diffs the two
+#   manifests. Lines prefixed '<' are only-in/differ-on source, '>' on target.
+#   Catches changed contents AND files present on only one side in a single pass.
+#   Returns 0 if contents are identical, 1 if they differ.
+# -----------------------------------------------------------------------------
+compare_fast_directories() {
+    local source_dir="$1"
+    local target_dir="$2"
+
+    if [[ ! -d "$source_dir" ]]; then
+        echo "ERROR: Source directory '$source_dir' does not exist"
+        return 2
+    fi
+    if [[ ! -d "$target_dir" ]]; then
+        echo "ERROR: Target directory '$target_dir' does not exist"
+        return 2
+    fi
+
+    # Pick the fastest hash tool that's installed.
+    local hasher=""
+    local h
+    for h in b3sum xxh128sum xxhsum sha1sum md5sum; do
+        if command -v "$h" >/dev/null 2>&1; then
+            hasher="$h"
+            break
+        fi
+    done
+    if [[ -z "$hasher" ]]; then
+        echo "ERROR: no hashing tool found (tried b3sum, xxh128sum, xxhsum, sha1sum, md5sum)"
+        return 2
+    fi
+
+    local jobs
+    jobs=$(nproc 2>/dev/null || echo 4)
+
+    echo "Comparing (hash=$hasher, parallel jobs=$jobs)"
+    echo "Source: $source_dir"
+    echo "Target: $target_dir"
+
+    # Hash each tree with relative paths, in parallel, sorted by path so the
+    # diff lines up. -print0/-0 keeps filenames with spaces/newlines safe.
+    local source_sums target_sums
+    source_sums=$(cd "$source_dir" && find . -type f -print0 | xargs -0 -r -P"$jobs" "$hasher" | sort -k2)
+    target_sums=$(cd "$target_dir" && find . -type f -print0 | xargs -0 -r -P"$jobs" "$hasher" | sort -k2)
+
+    if diff <(echo "$source_sums") <(echo "$target_sums"); then
+        echo "✓ SUCCESS: Directory contents are identical"
+        return 0
+    else
+        echo "❌ FAILURE: Directory contents differ (see diff above)"
+        return 1
+    fi
+}
+
+# -----------------------------------------------------------------------------
 # When executed directly (not sourced), act as a dispatcher:
 #   ./utils.sh compare_directories ~/a ~/b
 # Sourcing the file (from .zshrc/.bashrc) only defines the functions above.
@@ -171,6 +229,7 @@ if [[ -n "${BASH_VERSION:-}" && "${BASH_SOURCE[0]}" == "${0}" ]]; then
         echo "Usage: $0 <function> [args...]"
         echo "Available functions:"
         echo "  compare_directories <source_dir> <target_dir>"
+        echo "  compare_fast_directories <source_dir> <target_dir>"
         echo "  custom_rsync <source> <target> [extra rsync args...]"
         echo "  fixspaces <dir>"
         echo "  fixspaces_preview <dir>"
