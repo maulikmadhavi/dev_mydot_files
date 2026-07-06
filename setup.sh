@@ -25,6 +25,12 @@ STEPS=(
   "Set zsh as default shell"
 )
 CURRENT_STEP=-1
+STEP_FAILED=()
+
+# Mark the current step as failed (setup continues; the final summary shows a
+# red ✗ and the script exits non-zero). Append to a critical command:
+#   some_command || fail_step
+fail_step() { STEP_FAILED[$CURRENT_STEP]=1; }
 
 step() {
   CURRENT_STEP=$((CURRENT_STEP + 1))
@@ -42,24 +48,39 @@ step() {
   echo ""
 }
 
+# Honest summary: shows what actually happened, returns 1 if anything failed.
 step_complete() {
+  local any_fail=0 i
+  for i in "${!STEP_FAILED[@]}"; do any_fail=1; done
   echo ""
   echo "════════════════════════════════════════════════════════════════"
-  echo "  Setup Complete!"
+  if [ "$any_fail" -eq 0 ]; then
+    echo "  Setup Complete!"
+  else
+    echo "  Setup finished WITH ERRORS — see failed steps below"
+  fi
   echo "════════════════════════════════════════════════════════════════"
-  for s in "${STEPS[@]}"; do
-    printf "  \033[0;32m[✓]\033[0m %s\n" "$s"
+  for i in "${!STEPS[@]}"; do
+    if [ -n "${STEP_FAILED[$i]:-}" ]; then
+      printf "  \033[0;31m[✗]\033[0m %s\n" "${STEPS[$i]}"
+    else
+      printf "  \033[0;32m[✓]\033[0m %s\n" "${STEPS[$i]}"
+    fi
   done
   echo "════════════════════════════════════════════════════════════════"
   echo ""
+  return "$any_fail"
 }
 
 # === 1. Install Pixi + base packages
 
 step
-curl -fsSL https://pixi.sh/install.sh | bash
+command -v pixi >/dev/null 2>&1 || curl -fsSL https://pixi.sh/install.sh | bash
 export PATH="$HOME/.pixi/bin:$PATH"
-pixi global install tmux yarn git nvim zsh python-lsp-server stow tree fzf diskus xclip
+# Package list kept in parity with setup_powershell_omp.ps1 (which swaps
+# tmux->psmux and installs git/nvim via winget instead).
+pixi global install tmux yarn git nvim zsh python-lsp-server stow tree fzf \
+    diskus xclip ripgrep eza gcc gxx make cmake || fail_step
 
 # Fast hashers for compare_fast_directories (utils.sh). Best-effort and in
 # their own commands: b3sum has no linux-aarch64 conda build, so it must not
@@ -79,16 +100,16 @@ fi
 # === 3. nvm + Node LTS
 
 step
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-nvm install --lts
+nvm install --lts || fail_step
 
 # === 4. vim-plug
 
 step
 curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs \
-  https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+  https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim || fail_step
 
 # === 5. oh-my-zsh submodule + symlink
 
@@ -101,7 +122,7 @@ fi
 if [ -d "$HOME/.oh-my-zsh" ] && [ ! -L "$HOME/.oh-my-zsh" ]; then
     rm -rf "$HOME/.oh-my-zsh"
 fi
-ln -sfn "$REPO_DIR/.oh-my-zsh" "$HOME/.oh-my-zsh"
+ln -sfn "$REPO_DIR/.oh-my-zsh" "$HOME/.oh-my-zsh" || fail_step
 
 # === 6. Stow dotfiles
 
@@ -153,8 +174,10 @@ git clone https://github.com/zsh-users/zsh-syntax-highlighting "$HOME/.oh-my-zsh
 # === 8. nvim plugins
 
 step
-nvim --headless +PlugInstall +qall 2>/dev/null || \
+nvim --headless +PlugInstall +qall 2>/dev/null || {
     echo "Warning: nvim PlugInstall had issues but continuing"
+    fail_step
+}
 
 # === 9. Switch default shell to zsh (best-effort; needs no sudo)
 
@@ -173,9 +196,12 @@ fi
 
 # === Done
 
-step_complete
-
 mkdir -p "$HOME/.oh-my-zsh/custom/themes"
 cp -f "oh-my-zsh-custom/themes/"*.zsh-theme "$HOME/.oh-my-zsh/custom/themes/"
 
-echo "Please restart your terminal."
+if step_complete; then
+    echo "Please restart your terminal."
+else
+    echo "Fix the failed steps above and re-run ./setup.sh (safe to re-run)."
+    exit 1
+fi
