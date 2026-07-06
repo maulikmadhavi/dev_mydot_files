@@ -82,9 +82,8 @@ Plug 'hrsh7th/cmp-buffer'
 Plug 'hrsh7th/cmp-path'
 Plug 'hrsh7th/cmp-nvim-lsp'
 Plug 'hrsh7th/cmp-nvim-lsp-signature-help'
-Plug 'hrsh7th/cmp-nvim-lua'
-Plug 'saadparwaiz1/cmp_luasnip'
-Plug 'L3MON4D3/LuaSnip'
+" Snippets in LSP completions expand via nvim 0.10+'s built-in vim.snippet —
+" no snippet-engine plugin needed.
 
 " LSP server config
 Plug 'neovim/nvim-lspconfig'
@@ -98,7 +97,6 @@ Plug 'https://github.com/preservim/tagbar', {'on': 'TagbarToggle'} " Tagbar for 
 Plug 'https://github.com/junegunn/fzf.vim' " Fuzzy Finder; :Rg needs ripgrep (installed by setup)
 Plug 'https://github.com/junegunn/fzf'
 Plug 'https://github.com/navarasu/onedark.nvim'
-Plug 'https://github.com/morhetz/gruvbox'
 Plug 'https://github.com/vim-airline/vim-airline-themes'
 Plug 'https://github.com/mbbill/undotree'
 " Plug 'neoclide/coc.nvim', {'branch': 'release'}
@@ -135,10 +133,9 @@ if not (ok_cmp and ok_cmplsp and lspconfig_present) then
   return
 end
 
-local luasnip = require('luasnip')
 cmp.setup({
   snippet = {
-    expand = function(args) luasnip.lsp_expand(args.body) end,
+    expand = function(args) vim.snippet.expand(args.body) end,
   },
   mapping = cmp.mapping.preset.insert({
     ['<CR>']      = cmp.mapping.confirm({ select = false }),
@@ -149,7 +146,6 @@ cmp.setup({
   sources = cmp.config.sources({
     { name = 'nvim_lsp', priority = 1000 },
     { name = 'nvim_lsp_signature_help' },  -- param hints while typing, like VS Code
-    { name = 'luasnip',  priority = 50  },
   }, {
     { name = 'buffer' },
     { name = 'path'   },
