@@ -80,7 +80,7 @@ export PATH="$HOME/.pixi/bin:$PATH"
 # Package list kept in parity with setup_powershell_omp.ps1 (which swaps
 # tmux->psmux and installs git/nvim via winget instead).
 pixi global install tmux yarn git nvim zsh python-lsp-server stow tree fzf \
-    diskus xclip ripgrep eza gcc gxx make cmake || fail_step
+    diskus xclip ripgrep eza gcc gxx make cmake universal-ctags || fail_step
 
 # Fast hashers for compare_fast_directories (utils.sh). Best-effort and in
 # their own commands: b3sum has no linux-aarch64 conda build, so it must not
@@ -199,7 +199,8 @@ done
 # === 8. nvim plugins
 
 step
-nvim --headless +PlugInstall +qall 2>/dev/null || {
+# PlugClean! also prunes plugin dirs left behind by removed Plug lines.
+nvim --headless +PlugInstall +PlugClean! +qall 2>/dev/null || {
     echo "Warning: nvim PlugInstall had issues but continuing"
     fail_step
 }

@@ -51,11 +51,10 @@ nnoremap <C-t> :NERDTreeToggle<CR>
 nnoremap <C-l> :UndotreeToggle<CR>
 nnoremap <C-g> :Files<CR>
 nnoremap <C-r> :Rg<CR>
-nnoremap <C-b> :NvimTreeToggle<CR>
 
 " Terminal mapping
-nnoremap <C-x> :FlotermToggle<CR>
-tnoremap <C-x> <C-\><C-n>:FlotermToggle<CR>
+nnoremap <C-x> :FloatermToggle<CR>
+tnoremap <C-x> <C-\><C-n>:FloatermToggle<CR>
 
 
 " Use <Tab> for autocompletion navigation
@@ -89,14 +88,13 @@ Plug 'L3MON4D3/LuaSnip'
 " LSP server config
 Plug 'neovim/nvim-lspconfig'
 
+" (vim-commentary removed: gcc/gc commenting is built into nvim 0.10+)
 Plug 'http://github.com/tpope/vim-surround' " Surrounding ysw)
-Plug 'https://github.com/tpope/vim-commentary' " For Commenting gcc & gc
 Plug 'https://github.com/preservim/nerdtree' ", {'on': 'NERDTreeToggle'}
 Plug 'https://github.com/vim-airline/vim-airline' " Status bar
 Plug 'https://github.com/ryanoasis/vim-devicons' " Developer Icons
 Plug 'https://github.com/preservim/tagbar', {'on': 'TagbarToggle'} " Tagbar for code navigation
-Plug 'https://github.com/junegunn/fzf.vim' " Fuzzy Finder, Needs Silversearcher-ag for :Ag
-Plug 'https://github.com/preservim/nerdtree'
+Plug 'https://github.com/junegunn/fzf.vim' " Fuzzy Finder; :Rg needs ripgrep (installed by setup)
 Plug 'https://github.com/junegunn/fzf'
 Plug 'https://github.com/navarasu/onedark.nvim'
 Plug 'https://github.com/morhetz/gruvbox'
@@ -105,12 +103,17 @@ Plug 'https://github.com/mbbill/undotree'
 " Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'https://github.com/lepture/vim-jinja'
 Plug 'https://github.com/tpope/vim-fugitive'
-Plug 'https://github.com/terryma/vim-multiple-cursors'  " CTRL + N for multiple corsors
+" vim-multiple-cursors is archived upstream; vim-visual-multi is its
+" successor with the same Ctrl-N workflow.
+Plug 'https://github.com/mg979/vim-visual-multi'  " CTRL + N for multiple cursors
 Plug 'https://github.com/matze/vim-move'
 Plug 'voldikss/vim-floaterm'
 Plug 'vim-python/python-syntax'
 Plug 'alvan/vim-closetag'
 call plug#end()
+
+" silent! — first launch before :PlugInstall must not error
+silent! colorscheme onedark
 
 " ============================================================
 " LSP completion (nvim-cmp + nvim-lspconfig)
