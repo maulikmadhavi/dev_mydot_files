@@ -143,13 +143,6 @@ npx() { unfunction npx; [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"; npx "$
 
 export FZF_BASE="$HOME/.pixi/bin/fzf"
 
-# --- AI autocomplete (minuet-ai.nvim, local OpenAI-compatible model) ---
-# minuet requires both env vars to be set, even when the backend (e.g. vLLM)
-# does not actually enforce the bearer token. Discover the model id with:
-#   curl -s http://localhost:8000/v1/models | jq -r '.data[].id'
-export MINUET_API_KEY="${MINUET_API_KEY:-dummy}"
-export MINUET_MODEL="${MINUET_MODEL:-YOUR_MODEL_NAME}"
-
 export PATH="/home/maulik/.pixi/bin:$PATH"
 # ---------------------- one liner ----------------------
 fixspaces() {

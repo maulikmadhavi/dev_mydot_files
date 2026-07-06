@@ -86,10 +86,8 @@ Plug 'hrsh7th/cmp-nvim-lua'
 Plug 'saadparwaiz1/cmp_luasnip'
 Plug 'L3MON4D3/LuaSnip'
 
-" LSP server config + AI completion via local OpenAI-compatible endpoint
+" LSP server config
 Plug 'neovim/nvim-lspconfig'
-Plug 'nvim-lua/plenary.nvim'
-Plug 'milanglacier/minuet-ai.nvim'
 
 Plug 'http://github.com/tpope/vim-surround' " Surrounding ysw)
 Plug 'https://github.com/tpope/vim-commentary' " For Commenting gcc & gc
@@ -115,46 +113,23 @@ Plug 'alvan/vim-closetag'
 call plug#end()
 
 " ============================================================
-" LSP + AI completion (nvim-cmp + nvim-lspconfig + minuet-ai)
+" LSP completion (nvim-cmp + nvim-lspconfig)
 " ============================================================
 lua << EOF
 local ok_cmp, cmp           = pcall(require, 'cmp')
-local ok_minuet, minuet     = pcall(require, 'minuet')
 local ok_cmplsp, cmp_nvim_lsp = pcall(require, 'cmp_nvim_lsp')
 -- nvim-lspconfig is required only as a *source of default server configs*
 -- (it ships `lsp/<server>.lua` files picked up by nvim 0.11's vim.lsp.config).
 -- We don't call into its deprecated framework API. Presence-check via rtp:
 local lspconfig_present = #vim.api.nvim_get_runtime_file('lsp/pylsp.lua', false) > 0
 
-if not (ok_cmp and ok_minuet and ok_cmplsp and lspconfig_present) then
+if not (ok_cmp and ok_cmplsp and lspconfig_present) then
   vim.schedule(function()
-    vim.notify('AI/LSP plugins missing — run :PlugInstall and restart nvim',
+    vim.notify('LSP plugins missing — run :PlugInstall and restart nvim',
                vim.log.levels.WARN)
   end)
   return
 end
-
--- Local vLLM @ :8000, OpenAI-compatible chat/completions.
--- Set $MINUET_MODEL to your served model name (find it via
---   curl http://localhost:8000/v1/models | jq '.data[].id'
--- ). vLLM does not enforce the bearer token by default, so any
--- value for $MINUET_API_KEY works; we name the env var to keep
--- the literal out of this file.
-minuet.setup({
-  provider = 'openai_compatible',
-  provider_options = {
-    openai_compatible = {
-      end_point = 'http://localhost:8000/v1/chat/completions',
-      api_key   = 'MINUET_API_KEY',
-      model     = vim.env.MINUET_MODEL or 'YOUR_MODEL_NAME',
-      name      = 'local-vllm',
-      stream    = true,
-      optional  = { max_tokens = 256, top_p = 0.9 },
-    },
-  },
-  virtualtext = { auto_trigger_ft = {} },
-  cmp         = { enable_auto_complete = true },
-})
 
 local luasnip = require('luasnip')
 cmp.setup({
@@ -166,17 +141,14 @@ cmp.setup({
     ['<C-Space>'] = cmp.mapping.complete(),
     ['<C-e>']     = cmp.mapping.abort(),
   }),
-  -- LSP first (high priority), local vLLM second, then snippets/buffer/path.
+  -- LSP first (high priority), then snippets/buffer/path.
   sources = cmp.config.sources({
     { name = 'nvim_lsp', priority = 1000 },
-    { name = 'minuet',   priority = 100, max_item_count = 3 },
     { name = 'luasnip',  priority = 50  },
   }, {
     { name = 'buffer' },
     { name = 'path'   },
   }),
-  -- minuet streams; raise fetch timeout so partial completions arrive
-  performance = { fetching_timeout = 2000 },
 })
 
 -- nvim 0.11+ API: vim.lsp.config merges over the defaults in lsp/pylsp.lua
