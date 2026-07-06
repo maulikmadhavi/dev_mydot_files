@@ -43,7 +43,6 @@ endif
 
 let g:NERDTreeDirArrowExpandable="+"
 let g:NERDTreeDirArrowCollapsible="~"
-let g:python_highlight_all = 1
 
 nnoremap <C-f> :NERDTreeFocus<CR>
 nnoremap <C-n> :NERDTree<CR>
@@ -70,7 +69,7 @@ vnoremap <S-Tab> <gv
 " let g:coc_snippet_next = '<Tab>'
 " let g:coc_snippet_prev = '<S-Tab>'
 
-nmap <F6> :TagbarToggle<CR>
+nmap <F6> :AerialToggle<CR>
 
 call plug#begin('~/.config/nvim/plugged')
 
@@ -93,7 +92,8 @@ Plug 'http://github.com/tpope/vim-surround' " Surrounding ysw)
 Plug 'https://github.com/preservim/nerdtree' ", {'on': 'NERDTreeToggle'}
 Plug 'https://github.com/vim-airline/vim-airline' " Status bar
 Plug 'https://github.com/ryanoasis/vim-devicons' " Developer Icons
-Plug 'https://github.com/preservim/tagbar', {'on': 'TagbarToggle'} " Tagbar for code navigation
+" nvim-0.11 branch: aerial's master requires nvim 0.12+
+Plug 'stevearc/aerial.nvim', {'branch': 'nvim-0.11'} " Code outline from LSP/treesitter (no ctags needed)
 Plug 'https://github.com/junegunn/fzf.vim' " Fuzzy Finder; :Rg needs ripgrep (installed by setup)
 Plug 'https://github.com/junegunn/fzf'
 Plug 'https://github.com/navarasu/onedark.nvim'
@@ -107,7 +107,9 @@ Plug 'https://github.com/tpope/vim-fugitive'
 Plug 'https://github.com/mg979/vim-visual-multi'  " CTRL + N for multiple cursors
 Plug 'https://github.com/matze/vim-move'
 Plug 'voldikss/vim-floaterm'
-Plug 'vim-python/python-syntax'
+" master branch: frozen but stable; the rewritten main branch needs the
+" tree-sitter CLI installed, which we don't ship.
+Plug 'nvim-treesitter/nvim-treesitter', {'branch': 'master', 'do': ':TSUpdate'} " Parser-based highlighting
 Plug 'alvan/vim-closetag'
 call plug#end()
 
@@ -182,5 +184,24 @@ vim.api.nvim_create_autocmd('BufWritePre', {
     end
   end,
 })
+
+-- Code outline on F6 (replaces tagbar; reads LSP/treesitter, no ctags binary).
+local ok_aerial, aerial = pcall(require, 'aerial')
+if ok_aerial then aerial.setup({}) end
+
+-- Treesitter highlighting. Handles both nvim-treesitter APIs: the frozen
+-- `master` branch (configs.setup) and the rewritten `main` branch
+-- (install + vim.treesitter.start via autocmd).
+local ts_langs = { 'python', 'bash', 'lua', 'vim', 'json', 'yaml', 'markdown' }
+local ok_ts_configs, ts_configs = pcall(require, 'nvim-treesitter.configs')
+if ok_ts_configs and ts_configs.setup then
+  ts_configs.setup({ ensure_installed = ts_langs, highlight = { enable = true } })
+elseif pcall(require, 'nvim-treesitter') then
+  require('nvim-treesitter').install(ts_langs)
+  vim.api.nvim_create_autocmd('FileType', {
+    pattern = ts_langs,
+    callback = function() pcall(vim.treesitter.start) end,
+  })
+end
 EOF
 

@@ -80,7 +80,7 @@ export PATH="$HOME/.pixi/bin:$PATH"
 # Package list kept in parity with setup_powershell_omp.ps1 (which swaps
 # tmux->psmux and installs git/nvim via winget instead).
 pixi global install tmux yarn git nvim zsh basedpyright ruff stow tree fzf \
-    diskus xclip ripgrep eza gcc gxx make cmake universal-ctags jq || fail_step
+    diskus xclip ripgrep eza gcc gxx make cmake jq || fail_step
 
 # Fast hashers for compare_fast_directories (utils.sh). Best-effort and in
 # their own commands: b3sum has no linux-aarch64 conda build, so it must not

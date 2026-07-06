@@ -81,7 +81,7 @@ This repo sets `clipboard=unnamedplus` in `init.vim`, so the **default register 
 | `Ctrl-r` | `:Rg` (live ripgrep project search) |
 | `Ctrl-l` | Toggle Undotree (visual undo history) |
 | `Ctrl-x` | Toggle Floaterm floating terminal (works inside the terminal too) |
-| `F6` | Toggle Tagbar code outline (needs universal-ctags — installed by setup.sh) |
+| `F6` | Toggle Aerial code outline (symbols from LSP/treesitter, no ctags) |
 | `Tab` / `Shift-Tab` (visual) | Indent right / left (keeps selection) |
 | `Tab` / `Shift-Tab` (insert) | Next / prev completion item |
 | `Enter` (insert) | Confirm selected completion |
