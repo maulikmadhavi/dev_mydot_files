@@ -51,8 +51,11 @@ nnoremap <C-l> :UndotreeToggle<CR>
 nnoremap <C-g> :Files<CR>
 nnoremap <C-r> :Rg<CR>
 
-" Terminal mapping
+" Terminal mapping — works from normal, insert and terminal mode (like
+" VS Code's Ctrl+`). Insert-mode Ctrl-x normally prefixes vim's built-in
+" completion submode, which nvim-cmp makes redundant.
 nnoremap <C-x> :FloatermToggle<CR>
+inoremap <C-x> <Esc>:FloatermToggle<CR>
 tnoremap <C-x> <C-\><C-n>:FloatermToggle<CR>
 
 
