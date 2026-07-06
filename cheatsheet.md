@@ -74,23 +74,43 @@ This repo sets `clipboard=unnamedplus` in `init.vim`, so the **default register 
 ### Custom mappings (this repo's `init.vim`)
 | Key | Action |
 |---|---|
-| `Ctrl-f` | Focus NERDTree |
+| `Ctrl-t` | Toggle NERDTree file explorer |
 | `Ctrl-n` | Open NERDTree |
-| `Ctrl-t` | Toggle NERDTree |
-| `Ctrl-b` | Toggle NvimTree |
-| `Ctrl-l` | Toggle Undotree |
+| `Ctrl-f` | Focus NERDTree |
 | `Ctrl-g` | `:Files` (fzf fuzzy file finder) |
-| `Ctrl-r` | `:Rg` (ripgrep search) |
-| `Ctrl-x` | Toggle Floaterm terminal (works in term too) |
-| `F6` | Toggle Tagbar |
-| `Tab` (visual) | Indent right |
-| `Shift-Tab` (visual) | Indent left |
-| `Tab` / `Shift-Tab` (insert) | Navigate autocomplete popup |
+| `Ctrl-r` | `:Rg` (live ripgrep project search) |
+| `Ctrl-l` | Toggle Undotree (visual undo history) |
+| `Ctrl-x` | Toggle Floaterm floating terminal (works inside the terminal too) |
+| `F6` | Toggle Tagbar code outline (needs universal-ctags — installed by setup.sh) |
+| `Tab` / `Shift-Tab` (visual) | Indent right / left (keeps selection) |
+| `Tab` / `Shift-Tab` (insert) | Next / prev completion item |
+| `Enter` (insert) | Confirm selected completion |
+| `Ctrl-Space` (insert) | Manually trigger completion |
+| `Ctrl-e` (insert) | Dismiss completion popup |
+
+> **Gotcha — `Ctrl-r` no longer redoes.** The `:Rg` mapping shadows vim's
+> built-in redo in normal mode. Use `:redo` (or remap `:Rg` to free the key).
+
+### LSP — Python via pylsp (nvim 0.11 built-in keymaps)
+| Key | Action |
+|---|---|
+| `K` | Hover docs |
+| `gd` | Go to definition |
+| `grr` | List references |
+| `grn` | Rename symbol |
+| `gra` | Code action |
+| `gri` | Go to implementation |
+| `gO` | Document symbols |
+| `[d` / `]d` | Prev / next diagnostic |
+| `Ctrl-s` (insert) | Signature help |
 
 ### Plugin shortcuts in `init.vim`
 - **vim-surround** — `ysiw)` wrap word in `()`, `cs"'` change `"` → `'`, `ds"` delete surrounding `"`.
-- **vim-commentary** — `gcc` toggle line comment, `gc<motion>` toggle range (e.g. `gcap` for paragraph).
-- **vim-move** — `Alt-j` / `Alt-k` move current line down / up.
+- **Commenting (built into nvim 0.10+)** — `gcc` toggle line comment, `gc<motion>` toggle range (e.g. `gcap` for paragraph, `gc` in visual mode).
+- **vim-visual-multi** — `Ctrl-N` on a word selects it; keep pressing to add the next occurrence (multiple cursors). `q` skips one, `Q` removes a cursor, `Esc` exits.
+- **vim-move** — `Alt-j` / `Alt-k` move current line or visual selection down / up.
+- **vim-fugitive** — `:Git` status, `:Git blame`, `:Gdiffsplit`, `:Git log`.
+- **vim-closetag** — auto-closes HTML/XML tags as you type; no keys to learn.
 
 ---
 
