@@ -79,7 +79,7 @@ command -v pixi >/dev/null 2>&1 || curl -fsSL https://pixi.sh/install.sh | bash
 export PATH="$HOME/.pixi/bin:$PATH"
 # Package list kept in parity with setup_powershell_omp.ps1 (which swaps
 # tmux->psmux and installs git/nvim via winget instead).
-pixi global install tmux yarn git nvim zsh python-lsp-server stow tree fzf \
+pixi global install tmux yarn git nvim zsh basedpyright ruff stow tree fzf \
     diskus xclip ripgrep eza gcc gxx make cmake universal-ctags jq || fail_step
 
 # Fast hashers for compare_fast_directories (utils.sh). Best-effort and in

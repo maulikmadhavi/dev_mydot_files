@@ -53,7 +53,7 @@ if (Get-Command pixi -ErrorAction SilentlyContinue) {
 # Package list kept in parity with setup.sh. Differences: tmux->psmux and
 # git/nvim via winget below; zsh/stow/xclip are Linux-only; xxhash/b3sum are
 # skipped because utils.sh (their only consumer) is bash-only.
-pixi global install yarn python-lsp-server fzf diskus tree ripgrep eza gcc gxx make cmake jq
+pixi global install yarn basedpyright ruff fzf diskus tree ripgrep eza gcc gxx make cmake jq
 
 # === Tooling installs
 

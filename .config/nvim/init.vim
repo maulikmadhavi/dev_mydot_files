@@ -81,6 +81,7 @@ Plug 'hrsh7th/nvim-cmp'
 Plug 'hrsh7th/cmp-buffer'
 Plug 'hrsh7th/cmp-path'
 Plug 'hrsh7th/cmp-nvim-lsp'
+Plug 'hrsh7th/cmp-nvim-lsp-signature-help'
 Plug 'hrsh7th/cmp-nvim-lua'
 Plug 'saadparwaiz1/cmp_luasnip'
 Plug 'L3MON4D3/LuaSnip'
@@ -124,7 +125,7 @@ local ok_cmplsp, cmp_nvim_lsp = pcall(require, 'cmp_nvim_lsp')
 -- nvim-lspconfig is required only as a *source of default server configs*
 -- (it ships `lsp/<server>.lua` files picked up by nvim 0.11's vim.lsp.config).
 -- We don't call into its deprecated framework API. Presence-check via rtp:
-local lspconfig_present = #vim.api.nvim_get_runtime_file('lsp/pylsp.lua', false) > 0
+local lspconfig_present = #vim.api.nvim_get_runtime_file('lsp/basedpyright.lua', false) > 0
 
 if not (ok_cmp and ok_cmplsp and lspconfig_present) then
   vim.schedule(function()
@@ -147,18 +148,43 @@ cmp.setup({
   -- LSP first (high priority), then snippets/buffer/path.
   sources = cmp.config.sources({
     { name = 'nvim_lsp', priority = 1000 },
+    { name = 'nvim_lsp_signature_help' },  -- param hints while typing, like VS Code
     { name = 'luasnip',  priority = 50  },
   }, {
     { name = 'buffer' },
     { name = 'path'   },
   }),
+  -- Inline preview of the selected completion, like VS Code's ghost text.
+  experimental = { ghost_text = true },
 })
 
--- nvim 0.11+ API: vim.lsp.config merges over the defaults in lsp/pylsp.lua
--- (provided by nvim-lspconfig on the rtp); vim.lsp.enable starts the client.
-vim.lsp.config('pylsp', {
-  capabilities = cmp_nvim_lsp.default_capabilities(),
+-- Python LSP, VS Code-style: basedpyright (open-source Pylance equivalent —
+-- typed completions, auto-imports, hover) + ruff (lint + format, same tool
+-- as the VS Code ruff extension). nvim 0.11+ API: vim.lsp.config merges over
+-- nvim-lspconfig's lsp/<server>.lua defaults; vim.lsp.enable starts them.
+local caps = cmp_nvim_lsp.default_capabilities()
+vim.lsp.config('basedpyright', { capabilities = caps })
+vim.lsp.config('ruff',         { capabilities = caps })
+vim.lsp.enable({ 'basedpyright', 'ruff' })
+
+-- ruff also answers hover requests; keep hover exclusively on basedpyright.
+vim.api.nvim_create_autocmd('LspAttach', {
+  callback = function(args)
+    local client = vim.lsp.get_client_by_id(args.data.client_id)
+    if client and client.name == 'ruff' then
+      client.server_capabilities.hoverProvider = false
+    end
+  end,
 })
-vim.lsp.enable('pylsp')
+
+-- Format Python on save with ruff (mirrors VS Code editor.formatOnSave).
+vim.api.nvim_create_autocmd('BufWritePre', {
+  pattern = '*.py',
+  callback = function(ev)
+    if #vim.lsp.get_clients({ bufnr = ev.buf, name = 'ruff' }) > 0 then
+      vim.lsp.buf.format({ bufnr = ev.buf, name = 'ruff', timeout_ms = 2000 })
+    end
+  end,
+})
 EOF
 
