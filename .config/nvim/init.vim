@@ -92,6 +92,10 @@ Plug 'hrsh7th/cmp-nvim-lsp-signature-help'
 " LSP server config
 Plug 'neovim/nvim-lspconfig'
 
+" AI ghost-text completion (Copilot-style) from a local OpenAI-compatible server
+Plug 'nvim-lua/plenary.nvim'          " required by minuet
+Plug 'milanglacier/minuet-ai.nvim'
+
 " (vim-commentary removed: gcc/gc commenting is built into nvim 0.10+)
 Plug 'http://github.com/tpope/vim-surround' " Surrounding ysw)
 Plug 'https://github.com/preservim/nerdtree' ", {'on': 'NERDTreeToggle'}
@@ -226,6 +230,64 @@ vim.api.nvim_create_autocmd('BufReadPost', {
     end
   end,
 })
+
+-- ============================================================
+-- AI ghost-text completion (minuet-ai) — Copilot-style inline
+-- suggestions from a local OpenAI-compatible server (vLLM,
+-- llama.cpp, LM Studio, Ollama...).
+--
+--   Zero config: the served model is auto-discovered from GET /v1/models.
+--   If the server is unreachable, AI completion silently stays off.
+--
+--   Optional env overrides:
+--     MINUET_ENDPOINT  base URL   (default http://localhost:8000/v1 — LAN vLLM)
+--     MINUET_MODEL     model id   (default: first model the server lists)
+--     MINUET_API_KEY   bearer     (default "dummy"; vLLM ignores it)
+--
+--   Keys while a grey suggestion is visible:  Alt-a accept, Alt-e dismiss
+-- ============================================================
+local ok_minuet, minuet = pcall(require, 'minuet')
+if ok_minuet then
+  local base = (vim.env.MINUET_ENDPOINT or 'http://localhost:8000/v1'):gsub('/+$', '')
+  vim.env.MINUET_API_KEY = vim.env.MINUET_API_KEY or 'dummy'
+  local function setup_minuet(model)
+    minuet.setup({
+      provider = 'openai_compatible',
+      provider_options = {
+        openai_compatible = {
+          end_point = base .. '/chat/completions',
+          api_key   = 'MINUET_API_KEY',  -- env var NAME, keeps the literal out of git
+          model     = model,
+          name      = 'local-llm',
+          stream    = true,
+          optional  = { max_tokens = 256, top_p = 0.9 },
+        },
+      },
+      virtualtext = {
+        auto_trigger_ft = { '*' },
+        keymap = {
+          accept  = '<A-a>',
+          dismiss = '<A-e>',
+        },
+      },
+      notify = 'error',  -- quiet unless something is actually broken
+    })
+  end
+  if vim.env.MINUET_MODEL then
+    setup_minuet(vim.env.MINUET_MODEL)
+  else
+    -- Async probe; nvim startup is never blocked by a missing server.
+    vim.system({ 'curl', '-fsS', '-m', '2', base .. '/models' }, { text = true }, function(out)
+      if out.code == 0 and out.stdout then
+        local ok_json, decoded = pcall(vim.json.decode, out.stdout)
+        local model = ok_json and decoded.data and decoded.data[1] and decoded.data[1].id
+        if model then
+          vim.schedule(function() setup_minuet(model) end)
+        end
+      end
+    end)
+  end
+end
 
 -- Treesitter highlighting. Handles both nvim-treesitter APIs: the frozen
 -- `master` branch (configs.setup) and the rewritten `main` branch
