@@ -4,6 +4,17 @@
 
 Write-Host "🚀 Starting Oh-My-Posh setup for PowerShell..." -ForegroundColor Green
 
+# === Self-update (mirror of setup.sh): pull latest dotfiles so a re-run picks
+# === up new files. Skipped when offline / diverged / not a git checkout.
+
+Set-Location $PSScriptRoot
+if (Test-Path (Join-Path $PSScriptRoot ".git")) {
+    git pull --ff-only 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Note: could not 'git pull' (offline or diverged); continuing with the current checkout." -ForegroundColor Yellow
+    }
+}
+
 # === Helpers
 
 function Install-WithFeedback {
@@ -39,7 +50,10 @@ if (Get-Command pixi -ErrorAction SilentlyContinue) {
         powershell -ExecutionPolicy Bypass -c "irm -useb https://pixi.sh/install.ps1 | iex"
     }
 }
-pixi global install yarn python-lsp-server fzf diskus
+# Package list kept in parity with setup.sh. Differences: tmux->psmux and
+# git/nvim via winget below; zsh/stow/xclip are Linux-only; xxhash/b3sum are
+# skipped because utils.sh (their only consumer) is bash-only.
+pixi global install yarn python-lsp-server fzf diskus tree ripgrep eza gcc gxx make cmake
 
 # === Tooling installs
 
@@ -53,6 +67,15 @@ Install-WithFeedback "PSReadLine" {
     Install-Module -Name PSReadLine -AllowClobber -Force -SkipPublisherCheck -Scope CurrentUser
 }
 
+# === Node.js via nvm-windows (mirror of setup.sh's nvm + Node LTS step;
+# === nvim completion plugins need a Node runtime)
+
+if (-not (Get-Command nvm -ErrorAction SilentlyContinue)) {
+    Install-WithFeedback "nvm-windows" {
+        winget install --id CoreyButler.NVMforWindows -e --source winget --accept-package-agreements --accept-source-agreements
+    }
+}
+
 # === Refresh environment
 
 Write-Host "`n🔄 Refreshing environment variables..." -ForegroundColor Cyan
@@ -62,6 +85,16 @@ $pixiBinPath = Join-Path $HOME ".pixi\envs\nvim\Library\bin"
 if ((Test-Path $pixiBinPath) -and ($env:PATH -notlike "*$pixiBinPath*")) {
     Write-Host "Adding Pixi bin path to current session: $pixiBinPath" -ForegroundColor Gray
     $env:PATH += ";$pixiBinPath"
+}
+
+# nvm-windows is on PATH after the refresh above; install/activate Node LTS.
+if (Get-Command nvm -ErrorAction SilentlyContinue) {
+    Install-WithFeedback "Node LTS (via nvm)" {
+        nvm install lts
+        nvm use lts
+    }
+} else {
+    Write-Host "[!] nvm not found after install — open a new terminal and run 'nvm install lts'." -ForegroundColor Yellow
 }
 
 # === Locate oh-my-posh themes path
@@ -155,7 +188,9 @@ if ($poshThemesPath) {
 
 # === Neovim + vim-plug
 
-winget install Neovim.Neovim  # non-Admin install path
+Install-WithFeedback "Neovim" {
+    winget install --id Neovim.Neovim -e --source winget --accept-package-agreements --accept-source-agreements
+}
 
 Write-Host "`n[*] Setting up Neovim plug-in manager (vim-plug)..." -ForegroundColor Cyan
 $destNvimConfigDir = "$HOME\.config\nvim"
@@ -177,13 +212,26 @@ if (Get-Command nvim -ErrorAction SilentlyContinue) {
     Add-ToProfileOnce -Marker 'Set-Alias vim nvim' `
         -Content 'Set-Alias vim nvim' `
         -Label "alias 'vim=nvim'"
+
+    # Mirror of setup.sh: install nvim plugins headlessly so first launch is ready.
+    Write-Host "`n[*] Installing nvim plugins (PlugInstall)..." -ForegroundColor Cyan
+    nvim --headless +PlugInstall +qall 2>$null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "[OK] nvim plugins installed" -ForegroundColor Green
+    } else {
+        Write-Host "[!] nvim PlugInstall had issues; run :PlugInstall inside nvim later." -ForegroundColor Yellow
+    }
 } else {
-    Write-Host "[!] nvim executable not found. Skipping alias setup." -ForegroundColor Yellow
+    Write-Host "[!] nvim executable not found. Skipping alias + plugin setup." -ForegroundColor Yellow
 }
 
 # === tmux for Windows
 
-choco install psmux -y
+if (Get-Command choco -ErrorAction SilentlyContinue) {
+    choco install psmux -y
+} else {
+    Write-Host "[!] Chocolatey not found — skipping psmux (tmux for Windows). Install choco and re-run if you want it." -ForegroundColor Yellow
+}
 
 # === PSReadLine config
 
@@ -208,10 +256,6 @@ try {
 } catch {
     Write-Host "[!] Error setting PSReadLine options: $_" -ForegroundColor Yellow
 }
-
-# === Additional pixi packages
-
-pixi global install ripgrep eza gcc gxx make cmake
 
 # === Linux/Unix utility aliases (idempotent — won't duplicate on re-run)
 
