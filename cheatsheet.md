@@ -78,7 +78,7 @@ This repo sets `clipboard=unnamedplus` in `init.vim`, so the **default register 
 | `Ctrl-n` | Open NERDTree |
 | `Ctrl-f` | Focus NERDTree |
 | `Ctrl-g` | `:Files` (fzf fuzzy file finder) |
-| `Ctrl-r` | `:Rg` (live ripgrep project search) |
+| `Ctrl-p` | `:Rg` (live ripgrep project search) |
 | `Ctrl-l` | Toggle Undotree (visual undo history) |
 | `Ctrl-x` | Toggle Floaterm floating terminal (works inside the terminal too) |
 | `F6` | Toggle Aerial code outline (symbols from LSP/treesitter, no ctags) |
@@ -87,9 +87,6 @@ This repo sets `clipboard=unnamedplus` in `init.vim`, so the **default register 
 | `Enter` (insert) | Confirm selected completion |
 | `Ctrl-Space` (insert) | Manually trigger completion |
 | `Ctrl-e` (insert) | Dismiss completion popup |
-
-> **Gotcha — `Ctrl-r` no longer redoes.** The `:Rg` mapping shadows vim's
-> built-in redo in normal mode. Use `:redo` (or remap `:Rg` to free the key).
 
 ### LSP — Python via pylsp (nvim 0.11 built-in keymaps)
 | Key | Action |
@@ -110,6 +107,8 @@ This repo sets `clipboard=unnamedplus` in `init.vim`, so the **default register 
 - **vim-visual-multi** — `Ctrl-N` on a word selects it; keep pressing to add the next occurrence (multiple cursors). `q` skips one, `Q` removes a cursor, `Esc` exits.
 - **vim-move** — `Alt-j` / `Alt-k` move current line or visual selection down / up.
 - **vim-fugitive** — `:Git` status, `:Git blame`, `:Gdiffsplit`, `:Git log`.
+- **gitsigns.nvim** — change markers in the gutter automatically; on demand: `:Gitsigns blame_line`, `:Gitsigns preview_hunk`, `:Gitsigns reset_hunk`. No keymaps by design.
+- **nvim-autopairs** — auto-closes `()[]{}`""''` as you type; accepting a function completion inserts `()` with the cursor inside.
 - **vim-closetag** — auto-closes HTML/XML tags as you type; no keys to learn.
 
 ---

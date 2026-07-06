@@ -39,6 +39,7 @@ elseif !empty($SSH_TTY) && has('nvim-0.10')
 endif
 :set cursorline   " highlight current cursorline
 :set ttyfast      " seepd up scrorring in Vim
+:set undofile     " persistent undo across sessions (pairs with Ctrl-l Undotree)
 	
 
 let g:NERDTreeDirArrowExpandable="+"
@@ -49,7 +50,8 @@ nnoremap <C-n> :NERDTree<CR>
 nnoremap <C-t> :NERDTreeToggle<CR>
 nnoremap <C-l> :UndotreeToggle<CR>
 nnoremap <C-g> :Files<CR>
-nnoremap <C-r> :Rg<CR>
+" Ctrl-p (not Ctrl-r, which stays vim's redo) for project-wide ripgrep search
+nnoremap <C-p> :Rg<CR>
 
 " Terminal mapping — works from normal, insert and terminal mode (like
 " VS Code's Ctrl+`). Insert-mode Ctrl-x normally prefixes vim's built-in
@@ -105,6 +107,8 @@ Plug 'https://github.com/mbbill/undotree'
 " Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'https://github.com/lepture/vim-jinja'
 Plug 'https://github.com/tpope/vim-fugitive'
+Plug 'lewis6991/gitsigns.nvim' " Git change markers in the gutter
+Plug 'windwp/nvim-autopairs'   " Auto-close brackets/quotes
 " vim-multiple-cursors is archived upstream; vim-visual-multi is its
 " successor with the same Ctrl-N workflow.
 Plug 'https://github.com/mg979/vim-visual-multi'  " CTRL + N for multiple cursors
@@ -191,6 +195,37 @@ vim.api.nvim_create_autocmd('BufWritePre', {
 -- Code outline on F6 (replaces tagbar; reads LSP/treesitter, no ctags binary).
 local ok_aerial, aerial = pcall(require, 'aerial')
 if ok_aerial then aerial.setup({}) end
+
+-- Show diagnostic messages inline, VS Code-style (nvim 0.11 turned
+-- virtual-text diagnostics off by default — only underlines/signs remain).
+vim.diagnostic.config({ virtual_text = true })
+
+-- Auto-close brackets/quotes; the cmp hook appends () and places the cursor
+-- inside when a function/method completion is accepted (Pylance behaviour).
+local ok_pairs, npairs = pcall(require, 'nvim-autopairs')
+if ok_pairs then
+  npairs.setup({})
+  local ok_cmp_pairs, cmp_autopairs = pcall(require, 'nvim-autopairs.completion.cmp')
+  if ok_cmp_pairs then
+    cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done())
+  end
+end
+
+-- Git change markers in the gutter. Deliberately NO keymaps — operations are
+-- available as commands when needed (:Gitsigns blame_line, :Gitsigns
+-- preview_hunk, :Gitsigns reset_hunk).
+local ok_gs, gitsigns = pcall(require, 'gitsigns')
+if ok_gs then gitsigns.setup({}) end
+
+-- Reopen a file at the last cursor position (VS Code does this by default).
+vim.api.nvim_create_autocmd('BufReadPost', {
+  callback = function(ev)
+    local mark = vim.api.nvim_buf_get_mark(ev.buf, '"')
+    if mark[1] > 0 and mark[1] <= vim.api.nvim_buf_line_count(ev.buf) then
+      pcall(vim.api.nvim_win_set_cursor, 0, mark)
+    end
+  end,
+})
 
 -- Treesitter highlighting. Handles both nvim-treesitter APIs: the frozen
 -- `master` branch (configs.setup) and the rewritten `main` branch
