@@ -63,8 +63,10 @@ COMPLETION_WAITING_DOTS="true"
 # see 'man strftime' for details.
 # HIST_STAMPS="mm/dd/yyyy"
 
-# Would you like to use another custom folder than $ZSH/custom?
-# ZSH_CUSTOM=/path/to/new-custom-folder
+# Custom themes/plugins live in the dotfiles repo (stowed to ~/oh-my-zsh-custom)
+# instead of inside the oh-my-zsh submodule, so the submodule stays clean and
+# theme edits in the repo are live without a copy step.
+ZSH_CUSTOM="$HOME/oh-my-zsh-custom"
 
 # Which plugins would you like to load?
 # Standard plugins can be found in $ZSH/plugins/

@@ -168,8 +168,20 @@ fi
 # === 7. zsh plugins
 
 step
-git clone https://github.com/zsh-users/zsh-autosuggestions "$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions" 2>/dev/null || true
-git clone https://github.com/zsh-users/zsh-syntax-highlighting "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" 2>/dev/null || true
+# Plugins go into the repo's own custom dir ($ZSH_CUSTOM in .zshrc), not the
+# oh-my-zsh submodule's custom/, so the submodule never gets dirty. The dir is
+# gitignored (third-party clones, not ours).
+mkdir -p "$REPO_DIR/oh-my-zsh-custom/plugins"
+for plugin in zsh-autosuggestions zsh-syntax-highlighting; do
+    [ -d "$REPO_DIR/oh-my-zsh-custom/plugins/$plugin" ] || \
+        git clone "https://github.com/zsh-users/$plugin" \
+            "$REPO_DIR/oh-my-zsh-custom/plugins/$plugin" || fail_step
+done
+# Clean up artifacts the old approach left inside the submodule (plugin clones
+# and a copied theme made `git status` report the submodule as dirty).
+rm -rf "$REPO_DIR/.oh-my-zsh/custom/plugins/zsh-autosuggestions" \
+       "$REPO_DIR/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
+rm -f  "$REPO_DIR/.oh-my-zsh/custom/themes/"*.zsh-theme
 
 # === 8. nvim plugins
 
@@ -195,9 +207,6 @@ else
 fi
 
 # === Done
-
-mkdir -p "$HOME/.oh-my-zsh/custom/themes"
-cp -f "oh-my-zsh-custom/themes/"*.zsh-theme "$HOME/.oh-my-zsh/custom/themes/"
 
 if step_complete; then
     echo "Please restart your terminal."
