@@ -1,2 +1,5 @@
 # Third-party zsh plugins cloned by setup.sh into the custom dir
 oh-my-zsh-custom/plugins/
+
+# Personal Claude Code overrides (project settings.json IS committed)
+.claude/settings.local.json

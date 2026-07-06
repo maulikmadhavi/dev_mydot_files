@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cmd=$(jq -r '.tool_input.command // \"\"'); case \"$cmd\" in *\"git commit\"*) git -C \"${CLAUDE_PROJECT_DIR:-.}\" push;; esac",
+            "timeout": 60,
+            "statusMessage": "Auto-pushing after commit"
+          }
+        ]
+      }
+    ]
+  }
+}
