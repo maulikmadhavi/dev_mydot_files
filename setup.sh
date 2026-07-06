@@ -178,10 +178,14 @@ for plugin in zsh-autosuggestions zsh-syntax-highlighting; do
             "$REPO_DIR/oh-my-zsh-custom/plugins/$plugin" || fail_step
 done
 # Clean up artifacts the old approach left inside the submodule (plugin clones
-# and a copied theme made `git status` report the submodule as dirty).
+# and copied themes made `git status` report the submodule as dirty). Only
+# remove themes that exist in our repo's custom dir — the submodule ships its
+# own tracked example.zsh-theme which must stay.
 rm -rf "$REPO_DIR/.oh-my-zsh/custom/plugins/zsh-autosuggestions" \
        "$REPO_DIR/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
-rm -f  "$REPO_DIR/.oh-my-zsh/custom/themes/"*.zsh-theme
+for theme in "$REPO_DIR/oh-my-zsh-custom/themes/"*.zsh-theme; do
+    [ -e "$theme" ] && rm -f "$REPO_DIR/.oh-my-zsh/custom/themes/$(basename "$theme")"
+done
 
 # === 8. nvim plugins
 
