@@ -108,8 +108,17 @@ nvm install --lts || fail_step
 # === 4. vim-plug
 
 step
-curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs \
-  https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim || fail_step
+# A failed download is only a real failure when plug.vim is missing — if a
+# previous run installed it, a network blip just means we keep that copy.
+PLUG_VIM="$HOME/.local/share/nvim/site/autoload/plug.vim"
+if ! curl -fLo "$PLUG_VIM" --create-dirs --retry 3 \
+    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim; then
+    if [ -s "$PLUG_VIM" ]; then
+        echo "Note: couldn't refresh vim-plug (network?); keeping the existing copy."
+    else
+        fail_step
+    fi
+fi
 
 # === 5. oh-my-zsh submodule + symlink
 
