@@ -75,7 +75,6 @@ if [ -f ~/.config/nvim/init.vim ] && [ -f ~/.config/nvim/init.lua ]; then
     echo "Removing conflicting init.vim (keeping init.lua)"
     rm ~/.config/nvim/init.vim
 fi
-rm -f ~/.zshrc ~/.bashrc 2>/dev/null || true
 
 # === 3. nvm + Node LTS
 
@@ -107,21 +106,43 @@ ln -sfn "$REPO_DIR/.oh-my-zsh" "$HOME/.oh-my-zsh"
 # === 6. Stow dotfiles
 
 step
-# Remove stray symlinks in $HOME that point back into this repo but were NOT
-# created by stow (older `ln -s` installs used absolute targets). Stow treats
-# these as "not owned by stow" and aborts the whole run, so clear them first.
-# Only symlinks are removed — never real files.
+# Remove stray symlinks in $HOME that point into ANY checkout of this repo —
+# the current one, or an older one (e.g. a /mnt/c/Users/<user>/mydot_files
+# checkout from before the repo moved into WSL). Stow treats these as "not
+# owned by stow" and aborts the whole run, so clear them first. readlink -f
+# resolves relative link targets (../../mnt/c/...) so the match works either
+# way. Only symlinks are removed — never real files.
 while IFS= read -r link; do
-    target="$(readlink "$link")"
+    target="$(readlink -f "$link" 2>/dev/null)"
     case "$target" in
-        "$REPO_DIR"/*) echo "Removing stale symlink: $link"; rm -f "$link" ;;
+        */mydot_files/*|*/mydot_files)
+            echo "Removing stale symlink: $link"; rm -f "$link" ;;
     esac
 done < <(find "$HOME" -maxdepth 3 \
             -path "$REPO_DIR" -prune -o \
             -path "$HOME/.oh-my-zsh" -prune -o \
             -type l -print 2>/dev/null)
 
-stow --target="$HOME" --restow . --adopt
+# Back up any REAL file (not symlink) that collides with a stowed file, so
+# stow can't abort on it and nothing is lost. Deleting rc files earlier (old
+# behaviour) left the shell unconfigured whenever a later step failed.
+BACKUP_DIR="$HOME/.dotfiles_backup_$(date +%Y%m%d_%H%M%S)"
+for f in .zshrc .bashrc .bash_aliases .vimrc utils.sh .config/nvim/init.vim; do
+    if [ -e "$HOME/$f" ] && [ ! -L "$HOME/$f" ]; then
+        mkdir -p "$BACKUP_DIR/$(dirname "$f")"
+        echo "Backing up existing ~/$f to $BACKUP_DIR/$f"
+        mv "$HOME/$f" "$BACKUP_DIR/$f"
+    fi
+done
+
+# No --adopt: it silently moves $HOME files INTO the repo, overwriting
+# committed content. Conflicts are handled above; anything left is a real
+# problem that must stop the run rather than scroll past.
+if ! stow --target="$HOME" --restow .; then
+    echo "ERROR: stow failed — dotfiles were NOT linked into \$HOME." >&2
+    echo "       Resolve the conflicts above and re-run ./setup.sh." >&2
+    exit 1
+fi
 
 # === 7. zsh plugins
 

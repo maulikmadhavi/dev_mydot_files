@@ -3,3 +3,9 @@ setup_powershell_omp.ps1
 .oh-my-zsh
 archive
 cheatsheet.md
+\.git
+\.gitmodules
+\.gitignore
+\.claude
+\.stow-local-ignore
+README.md
