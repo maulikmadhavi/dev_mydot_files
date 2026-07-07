@@ -286,6 +286,14 @@ if ok_minuet then
       },
       notify = 'error',  -- quiet unless something is actually broken
     })
+    -- setup runs async (after model discovery), which is later than the
+    -- FileType event of buffers opened at launch — minuet's auto-trigger
+    -- autocmd missed them, so flip its per-buffer flag here directly.
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].buftype == '' then
+        vim.b[buf].minuet_virtual_text_auto_trigger = true
+      end
+    end
   end
   if vim.env.MINUET_MODEL then
     setup_minuet(vim.env.MINUET_MODEL)
