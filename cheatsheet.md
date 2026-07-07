@@ -109,7 +109,7 @@ This repo sets `clipboard=unnamedplus` in `init.vim`, so the **default register 
 - **vim-fugitive** — `:Git` status, `:Git blame`, `:Gdiffsplit`, `:Git log`.
 - **gitsigns.nvim** — change markers in the gutter automatically; on demand: `:Gitsigns blame_line`, `:Gitsigns preview_hunk`, `:Gitsigns reset_hunk`. No keymaps by design.
 - **nvim-autopairs** — auto-closes `()[]{}`""''` as you type; accepting a function completion inserts `()` with the cursor inside.
-- **minuet-ai** — Copilot-style grey ghost-text suggestions from the LAN vLLM server (auto-discovers the served model; silent when the server is down). `Alt-a` accept, `Alt-e` dismiss. Override with `MINUET_ENDPOINT` / `MINUET_MODEL` env vars.
+- **minuet-ai** — Copilot-style grey ghost-text suggestions from the LAN vLLM server (auto-discovers the served model; silent when the server is down). `Alt-a` accept, `Alt-e` dismiss. Toggle on/off with `:Minuet virtualtext toggle`. Override with `MINUET_ENDPOINT` / `MINUET_MODEL` env vars.
 - **vim-closetag** — auto-closes HTML/XML tags as you type; no keys to learn.
 
 ---
