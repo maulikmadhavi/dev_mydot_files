@@ -13,27 +13,51 @@
 :syntax on          " syntax highlight
 :set clipboard=unnamedplus  " using system clipboard
 
-" WSL: clip.exe is write-only and nvim's auto-detect is unreliable here
+" WSL: clip.exe is write-only and nvim's auto-detect is unreliable here.
+" Copies go through jobstart (fire-and-forget) so every y/dd/x does not
+" block ~80ms on the Windows process; paste stays synchronous.
 if has('wsl') && executable('win32yank.exe')
+  let s:win32yank = exepath('win32yank.exe')
+  let s:clip_job = -1
+  function! s:ClipCopy(lines, regtype) abort
+    " Serialize: a still-running previous write must land first, or two
+    " rapid yanks can reach the Windows clipboard out of order.
+    if s:clip_job > 0
+      call jobwait([s:clip_job], 1000)
+    endif
+    let s:clip_job = jobstart([s:win32yank, '-i', '--crlf'])
+    call chansend(s:clip_job, a:lines)
+    call chanclose(s:clip_job, 'stdin')
+  endfunction
+  " nvim kills jobstart'd jobs on exit, so a yank right before :wq never
+  " reached Windows. Wait (bounded) for the last copy before leaving.
+  augroup ClipFlush
+    autocmd!
+    autocmd VimLeavePre * if s:clip_job > 0 | call jobwait([s:clip_job], 1000) | endif
+  augroup END
   let g:clipboard = {
-    \   'name': 'win32yank',
-    \   'copy':  { '+': 'win32yank.exe -i --crlf', '*': 'win32yank.exe -i --crlf' },
-    \   'paste': { '+': 'win32yank.exe -o --lf',  '*': 'win32yank.exe -o --lf'  },
+    \   'name': 'win32yank-async',
+    \   'copy':  { '+': function('s:ClipCopy'), '*': function('s:ClipCopy') },
+    \   'paste': { '+': s:win32yank . ' -o --lf', '*': s:win32yank . ' -o --lf' },
     \ }
-" Remote SSH (bare Linux, no DISPLAY): use OSC 52 so yanks reach the
-" local terminal's clipboard. Most terminals only implement OSC 52 copy,
-" not paste — so pasting INTO vim usually still needs terminal paste
-" (Ctrl-Shift-V) or a register that has the data already.
+" Remote SSH (bare Linux, no DISPLAY): OSC 52 copy so yanks reach the
+" local clipboard. Paste is deliberately NOT OSC 52: Windows Terminal and
+" VS Code never answer the OSC 52 paste query, so nvim froze for seconds
+" on every p / getreg('+'). Reading + now falls back to the unnamed
+" register; paste from the local machine with terminal paste (Ctrl-Shift-V).
 elseif !empty($SSH_TTY) && has('nvim-0.10')
+  function! s:ClipPasteFallback() abort
+    return [getreg('"', 1, 1), getregtype('"')]
+  endfunction
   let g:clipboard = {
-    \ 'name': 'OSC 52',
+    \ 'name': 'OSC 52 copy-only',
     \ 'copy': {
     \   '+': v:lua.require('vim.ui.clipboard.osc52').copy('+'),
     \   '*': v:lua.require('vim.ui.clipboard.osc52').copy('*'),
     \ },
     \ 'paste': {
-    \   '+': v:lua.require('vim.ui.clipboard.osc52').paste('+'),
-    \   '*': v:lua.require('vim.ui.clipboard.osc52').paste('*'),
+    \   '+': function('s:ClipPasteFallback'),
+    \   '*': function('s:ClipPasteFallback'),
     \ },
   \ }
 endif
@@ -254,7 +278,7 @@ vim.api.nvim_create_autocmd('BufReadPost', {
 --   If the server is unreachable, AI completion silently stays off.
 --
 --   Optional env overrides:
---     MINUET_ENDPOINT  base URL   (default http://localhost:8000/v1 — LAN vLLM)
+--     MINUET_ENDPOINT  base URL   (default http://localhost:8000/v1)
 --     MINUET_MODEL     model id   (default: first model the server lists)
 --     MINUET_API_KEY   bearer     (default "dummy"; vLLM ignores it)
 --

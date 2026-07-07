@@ -90,6 +90,9 @@ alias vim=nvim
 # Personal shell utility functions (compare_directories, custom_rsync, ...)
 [ -f ~/utils.sh ] && source ~/utils.sh
 
+# Machine-local secrets/overrides (MINUET_ENDPOINT, ...) — never committed
+[ -f ~/.zshrc.local ] && source ~/.zshrc.local
+
 # User configuration
 
 # export MANPATH="/usr/local/man:$MANPATH"
