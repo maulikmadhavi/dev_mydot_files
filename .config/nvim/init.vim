@@ -61,10 +61,9 @@ inoremap <C-x> <Esc>:FloatermToggle<CR>
 tnoremap <C-x> <C-\><C-n>:FloatermToggle<CR>
 
 
-" Use <Tab> for autocompletion navigation
-inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
-inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
-" <CR> confirm is handled by nvim-cmp mapping below (asyncomplete is not installed)
+" Insert-mode <Tab>/<S-Tab> are smart mappings defined in the lua block below:
+" accept AI ghost text > navigate completion menu > literal tab.
+" <CR> confirm is handled by nvim-cmp mapping below.
 
 " Use <Tab> to indent selected lines in visual mode
 vnoremap <Tab> >gv
@@ -154,6 +153,21 @@ cmp.setup({
     ['<CR>']      = cmp.mapping.confirm({ select = false }),
     ['<C-Space>'] = cmp.mapping.complete(),
     ['<C-e>']     = cmp.mapping.abort(),
+    -- Smart Tab (Copilot/VS Code feel): accept grey AI ghost text if visible,
+    -- else navigate the completion menu, else insert a literal tab.
+    ['<Tab>'] = cmp.mapping(function(fallback)
+      local ok_vt, vt = pcall(require, 'minuet.virtualtext')
+      if ok_vt and vt.action.is_visible() then
+        vt.action.accept()
+      elseif cmp.visible() then
+        cmp.select_next_item()
+      else
+        fallback()
+      end
+    end, { 'i' }),
+    ['<S-Tab>'] = cmp.mapping(function(fallback)
+      if cmp.visible() then cmp.select_prev_item() else fallback() end
+    end, { 'i' }),
   }),
   -- LSP first (high priority), then snippets/buffer/path.
   sources = cmp.config.sources({
@@ -288,6 +302,9 @@ if ok_minuet then
     end)
   end
 end
+
+-- (Smart <Tab>/<S-Tab> live in cmp.setup's mapping table above — cmp's
+-- fallback() feeds the original key without reordering fast typing.)
 
 -- Treesitter highlighting. Handles both nvim-treesitter APIs: the frozen
 -- `master` branch (configs.setup) and the rewritten `main` branch

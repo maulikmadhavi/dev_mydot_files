@@ -80,10 +80,11 @@ This repo sets `clipboard=unnamedplus` in `init.vim`, so the **default register 
 | `Ctrl-g` | `:Files` (fzf fuzzy file finder) |
 | `Ctrl-p` | `:Rg` (live ripgrep project search) |
 | `Ctrl-l` | Toggle Undotree (visual undo history) |
-| `Ctrl-x` | Toggle Floaterm floating terminal (works inside the terminal too) |
+| `Ctrl-x` | Toggle Floaterm floating terminal (from normal, insert and terminal mode) |
 | `F6` | Toggle Aerial code outline (symbols from LSP/treesitter, no ctags) |
 | `Tab` / `Shift-Tab` (visual) | Indent right / left (keeps selection) |
-| `Tab` / `Shift-Tab` (insert) | Next / prev completion item |
+| `Tab` (insert) | **Smart**: accept AI ghost text if visible → else next completion item → else literal tab |
+| `Shift-Tab` (insert) | Prev completion item (literal shift-tab otherwise) |
 | `Enter` (insert) | Confirm selected completion |
 | `Ctrl-Space` (insert) | Manually trigger completion |
 | `Ctrl-e` (insert) | Dismiss completion popup |
@@ -112,7 +113,8 @@ server is unreachable, AI completion silently stays off (no errors).
 
 | Key / command | Action |
 |---|---|
-| `Alt-a` | Accept the visible suggestion |
+| `Tab` | Accept the visible suggestion (Copilot-style; falls through to completion menu / literal tab when no ghost text) |
+| `Alt-a` | Accept the visible suggestion (always AI, never falls through) |
 | `Alt-e` | Dismiss the visible suggestion |
 | `:Minuet virtualtext toggle` | Turn auto-suggestions on / off (prints new state) |
 | `:Minuet virtualtext enable` / `disable` | Explicit on / off |
