@@ -167,3 +167,9 @@ fixspaces_preview() {
     done
 }
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+# Free Ctrl-S / Ctrl-Q from terminal flow control (XON/XOFF). Without this,
+# Ctrl-S freezes the terminal on WSL and Linux until Ctrl-Q — which makes any
+# Ctrl-S keybinding feel broken. Windows Terminal on PowerShell is unaffected,
+# but this keeps behaviour identical across all three environments.
+[[ -o interactive ]] && stty -ixon 2>/dev/null

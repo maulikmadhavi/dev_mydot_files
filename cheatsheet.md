@@ -78,21 +78,94 @@ don't shadow vim's built-in `Ctrl-` keys (`Ctrl-f` page forward, `Ctrl-l`
 clear search highlight + redraw, `Ctrl-x` decrement number, `Ctrl-t` pop tag
 stack, `Ctrl-g` file info — all still work).
 
+Everything below uses only `Space`+letter or plain `Ctrl`+letter, so the same
+keys behave identically on Windows PowerShell, WSL, and bare Linux — including
+over SSH, tmux and screen. See [Portability](#why-these-keys-portability) for
+what's deliberately avoided.
+
 | Key | Action |
 |---|---|
 | `Space e` | Toggle NERDTree file explorer |
 | `Space f` | `:Files` (fzf fuzzy file finder) |
 | `Space r` | `:Rg` (live ripgrep project search) |
 | `Space u` | Toggle Undotree (visual undo history) |
+| `Space t` | Toggle Floaterm floating terminal |
+| `Space o` | Toggle Aerial code outline (symbols from LSP/treesitter, no ctags) |
+| `Space v` | Blockwise-visual — same as `Ctrl-v`, which most terminals steal |
+| `Space j` / `Space k` | Move line (or visual selection) down / up — vim-move |
 | `Ctrl-p` | `:Rg` — second binding for the same thing (normal-mode `Ctrl-p` is just `k`) |
-| `F6` | Toggle Aerial code outline (symbols from LSP/treesitter, no ctags) |
-| `F7` | Toggle Floaterm floating terminal (from normal, insert and terminal mode) |
-| `Tab` / `Shift-Tab` (visual) | Indent right / left (keeps selection) |
+| `F6` / `F7` | Aerial / Floaterm — F-key aliases; `F7` also works from insert and terminal mode |
+| `Tab` / `Shift-Tab` (visual) | Indent right / left (keeps selection; inserts a **hard tab** — `init.vim` has no `expandtab`) |
 | `Tab` (insert) | **Smart**: accept AI ghost text if visible → else next completion item → else literal tab |
 | `Shift-Tab` (insert) | Prev completion item (literal shift-tab otherwise) |
 | `Enter` (insert) | Confirm selected completion |
-| `Ctrl-Space` (insert) | Manually trigger completion |
-| `Ctrl-e` (insert) | Dismiss completion popup |
+| `Ctrl-y` (insert) | **Smart accept**: AI ghost text → else confirm completion → else literal key |
+| `Ctrl-e` (insert) | **Smart dismiss**: AI ghost text → else close completion popup → else literal key |
+| `Ctrl-l` (insert) | Manually trigger completion (`Ctrl-Space` also works, but is unreliable — see below) |
+
+### Why these keys (portability)
+
+The bindings avoid four whole categories of key that break in at least one of
+the three environments:
+
+| Avoided | Why |
+|---|---|
+| **`Alt` / `Meta`** | gnome-terminal on Ubuntu binds `Alt-f/e/v/s/t/h` to its menu bar — `Alt-e` (the old AI-dismiss key) opened the Edit menu instead. Over SSH and tmux, `Alt` is sent as an `ESC` prefix that races with a real `<Esc>`. |
+| **`Ctrl-Space`** | Sends a NUL byte that not every terminal forwards, and IBus on Ubuntu claims it as the input-method switcher. |
+| **`Ctrl-v` / `Ctrl-c`** | Windows Terminal binds both (`Terminal.PasteFromClipboard` / `CopyToClipboard`), so they never reach nvim. `Ctrl-c` at least falls through when nothing is selected; `Ctrl-v` never does — hence `Space v`. |
+| **`Ctrl-s` / `Ctrl-q`** | Terminal flow control (XON/XOFF). Harmless *inside* nvim, which puts the tty in raw mode, but it freezes the shell on WSL/Linux. `.zshrc` now runs `stty -ixon` to disable it. |
+
+To use the real `Ctrl-v` for blockwise-visual instead of `Space v`, delete the
+`ctrl+v` entry from Windows Terminal's `settings.json` keybindings and paste
+with `Ctrl-Shift-V`.
+
+### Editing many lines at once
+
+Three ways, easiest first.
+
+**1. `cgn` + `.` — the one to learn.** No plugin, no special keys, works over SSH
+and in any terminal. Put the cursor on the word, then:
+
+| Key | Action |
+|---|---|
+| `*` | Search for the word under the cursor (also lands you on the next one) |
+| `cgn` | **c**hange the next match — type the replacement, then `Esc` |
+| `.` | Repeat on the next match |
+| `n` `n` | Skip a match — **two** presses, see below |
+
+So `*` `cgn` `newname` `Esc` then `.` `.` `.` renames one occurrence per `.`.
+This beats multi-cursor for most renames: you review each change as you make
+it, and there's nothing to exit.
+
+> **Skipping takes two `n`s, not one.** `.` changes the match at *or after* the
+> cursor. A single `n` moves the cursor onto the next match — which is the same
+> one `.` was already going to change, so `n` `.` and a bare `.` do exactly the
+> same thing. To leave a match alone, press `n` twice: once to land on it, once
+> to move past it, then `.`.
+
+If you don't need to skip any, just use `:%s/old/new/g` — add the `c` flag
+(`:%s/old/new/gc`) to confirm each one interactively.
+
+**2. `Space v` — visual block**, for rectangular edits on consecutive lines.
+Extend with `j`/`k`, then `I` (insert before), `A` (append after), `c`, `d`, or
+`r<c>`. **The edit only replicates to the other lines when you press `Esc`** —
+until then you'll see it on one line only, which is normal.
+
+- Comment 5 lines: `Space v` `jjjj` `I` `# ` `Esc`
+- Append `,` to ragged lines: `Space v` `jjjj` `$` `A` `,` `Esc` (the `$` is what
+  handles lines of different lengths)
+
+**3. `Ctrl-n` — multi-cursor** (vim-visual-multi), for scattered occurrences.
+`Ctrl-n` selects the word and again adds the next; `q` skips one, `Q` drops a
+cursor, `Tab` switches selections ↔ bare cursors, `Esc` exits. Then edit
+normally and it applies at every cursor. Requires `:PlugInstall`.
+
+> **Gotcha — `Ctrl-v` pastes instead of entering block mode.** Windows Terminal
+> binds `ctrl+v` to `Terminal.PasteFromClipboard`, so the key never reaches
+> nvim; VS Code's integrated terminal does the same. That's why `Space v` exists
+> — it always gets through. To free the real `Ctrl-v` instead, delete the
+> `ctrl+v` entry from Windows Terminal's `settings.json` keybindings and paste
+> with `Ctrl-Shift-V`.
 
 ### LSP — Python via basedpyright + ruff (nvim 0.11 built-in keymaps)
 
@@ -125,8 +198,8 @@ server is unreachable, AI completion silently stays off (no errors).
 | Key / command | Action |
 |---|---|
 | `Tab` | Accept the visible suggestion (Copilot-style; falls through to completion menu / literal tab when no ghost text) |
-| `Alt-a` | Accept the visible suggestion (always AI, never falls through) |
-| `Alt-e` | Dismiss the visible suggestion |
+| `Ctrl-y` | Accept the visible suggestion (falls through to confirming a normal completion) |
+| `Ctrl-e` | Dismiss the visible suggestion (falls through to closing the completion popup) |
 | `:Minuet virtualtext toggle` | Turn auto-suggestions on / off (prints new state) |
 | `:Minuet virtualtext enable` / `disable` | Explicit on / off |
 
@@ -140,7 +213,7 @@ Notes:
 - **vim-surround** — `ysiw)` wrap word in `()`, `cs"'` change `"` → `'`, `ds"` delete surrounding `"`.
 - **Commenting (built into nvim 0.10+)** — `gcc` toggle line comment, `gc<motion>` toggle range (e.g. `gcap` for paragraph, `gc` in visual mode).
 - **vim-visual-multi** — `Ctrl-n` on a word selects it; keep pressing to add the next occurrence (multiple cursors). `q` skips one, `Q` removes a cursor, `Esc` exits. (`Ctrl-n` is exclusively multi-cursor's — NERDTree moved to `Space e`.)
-- **vim-move** — `Alt-j` / `Alt-k` move current line or visual selection down / up.
+- **vim-move** — `Space j` / `Space k` move current line or visual selection down / up. (Its `Alt-j`/`Alt-k` defaults are disabled via `g:move_map_keys = 0`; `Alt` is unreliable over SSH and tmux.)
 - **vim-fugitive** — `:Git` status, `:Git blame`, `:Gdiffsplit`, `:Git log`.
 - **gitsigns.nvim** — change markers in the gutter automatically; on demand: `:Gitsigns blame_line`, `:Gitsigns preview_hunk`, `:Gitsigns reset_hunk`. No keymaps by design.
 - **nvim-autopairs** — auto-closes `()[]{}`""''` as you type; accepting a function completion inserts `()` with the cursor inside.

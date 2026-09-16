@@ -66,12 +66,24 @@ endif
 :set undofile     " persistent undo across sessions (pairs with Ctrl-l Undotree)
 	
 
-" <Space> as leader. Custom bindings live here rather than in the Ctrl
-" namespace, where every key already means something to vim: Ctrl-f page
-" forward, Ctrl-l redraw, Ctrl-x decrement number, Ctrl-t pop tag stack,
-" Ctrl-g file info. All of those are now left intact.
+" ============================================================
+" Keybinding policy: identical behaviour on Windows PowerShell,
+" WSL, and bare Linux — including over SSH, tmux and screen.
+"
+"   Use:    <leader> (Space) + letter, and plain Ctrl+letter.
+"   Avoid:  Alt/Meta      — gnome-terminal steals Alt-f/e/v/s/t/h for its
+"                           menus, and over SSH/tmux Alt is sent as an ESC
+"                           prefix that races with a real <Esc>.
+"           <C-Space>     — sends NUL; IBus on Ubuntu grabs it by default.
+"           <C-v>, <C-c>  — Windows Terminal binds both to paste/copy, so
+"                           they never reach nvim.
+"           <C-s>, <C-q>  — terminal flow control (XON/XOFF).
+" ============================================================
 let mapleader = " "
 nnoremap <Space> <Nop>
+
+" vim-move defaults to Alt-h/j/k/l; remapped to <leader>j/k after plug#end().
+let g:move_map_keys = 0
 
 let g:NERDTreeDirArrowExpandable="+"
 let g:NERDTreeDirArrowCollapsible="~"
@@ -80,6 +92,14 @@ nnoremap <leader>e :NERDTreeToggle<CR>
 nnoremap <leader>f :Files<CR>
 nnoremap <leader>r :Rg<CR>
 nnoremap <leader>u :UndotreeToggle<CR>
+" Blockwise-visual (multiline column edit). Windows Terminal binds ctrl+v to
+" paste, so plain <C-v> never reaches nvim there — and VS Code's terminal and
+" most SSH clients have the same habit. <leader>v always gets through.
+nnoremap <leader>v <C-v>
+" Panel toggles also have F-key bindings below; these leader aliases work even
+" where function keys are mangled (screen/tmux without matching terminfo).
+nnoremap <leader>t :FloatermToggle<CR>
+nnoremap <leader>o :AerialToggle<CR>
 " Ctrl-p kept as a second binding for :Rg — in normal mode it is just a
 " synonym for `k`, so it shadows nothing worth keeping. (Ctrl-r is
 " deliberately left alone: it is vim's redo.)
@@ -163,6 +183,13 @@ call plug#end()
 " silent! — first launch before :PlugInstall must not error
 silent! colorscheme onedark
 
+" vim-move on <leader>j/k instead of its default Alt-j/Alt-k (see the
+" keybinding policy at the top). <Plug> targets require map, not noremap.
+nmap <leader>j <Plug>MoveLineDown
+nmap <leader>k <Plug>MoveLineUp
+vmap <leader>j <Plug>MoveBlockDown
+vmap <leader>k <Plug>MoveBlockUp
+
 " ============================================================
 " LSP completion (nvim-cmp + nvim-lspconfig)
 " ============================================================
@@ -188,8 +215,36 @@ cmp.setup({
   },
   mapping = cmp.mapping.preset.insert({
     ['<CR>']      = cmp.mapping.confirm({ select = false }),
+    -- <C-l> is the portable trigger; <C-Space> kept for muscle memory but it
+    -- is unreliable (NUL byte, and IBus grabs it on Ubuntu).
+    ['<C-l>']     = cmp.mapping.complete(),
     ['<C-Space>'] = cmp.mapping.complete(),
-    ['<C-e>']     = cmp.mapping.abort(),
+    -- Accept: AI ghost text > selected completion > literal key. Replaces the
+    -- old Alt-a, which gnome-terminal and SSH sessions both mangle.
+    ['<C-y>'] = cmp.mapping(function(fallback)
+      local ok_vt, vt = pcall(require, 'minuet.virtualtext')
+      if ok_vt and vt.action.is_visible() then
+        vt.action.accept()
+      elseif cmp.visible() then
+        cmp.confirm({ select = true })
+      else
+        fallback()
+      end
+    end, { 'i' }),
+    -- Dismiss: AI ghost text > completion popup > literal key (was Alt-e,
+    -- which collides with gnome-terminal's Edit menu).
+    ['<C-e>'] = cmp.mapping(function(fallback)
+      local ok_vt, vt = pcall(require, 'minuet.virtualtext')
+      -- Guarded: if minuet ever renames action.dismiss, fall through to cmp
+      -- rather than throwing on every Ctrl-e.
+      if ok_vt and vt.action.is_visible() and vt.action.dismiss then
+        vt.action.dismiss()
+      elseif cmp.visible() then
+        cmp.abort()
+      else
+        fallback()
+      end
+    end, { 'i' }),
     -- Smart Tab (Copilot/VS Code feel): accept grey AI ghost text if visible,
     -- else navigate the completion menu, else insert a literal tab.
     ['<Tab>'] = cmp.mapping(function(fallback)
@@ -295,7 +350,8 @@ vim.api.nvim_create_autocmd('BufReadPost', {
 --     MINUET_MODEL     model id   (default: first model the server lists)
 --     MINUET_API_KEY   bearer     (default "dummy"; vLLM ignores it)
 --
---   Keys while a grey suggestion is visible:  Alt-a accept, Alt-e dismiss
+--   Keys while a grey suggestion is visible:  Tab or Ctrl-y accept,
+--   Ctrl-e dismiss (all defined in cmp.setup's mapping table above).
 -- ============================================================
 local ok_minuet, minuet = pcall(require, 'minuet')
 if ok_minuet then
@@ -316,9 +372,13 @@ if ok_minuet then
       },
       virtualtext = {
         auto_trigger_ft = { '*' },
+        -- Accept/dismiss are handled by the <Tab>/<C-y>/<C-e> chains in
+        -- cmp.setup above, so minuet's own keymaps are pointed at unreachable
+        -- <Plug> pseudo-keys. (Its defaults were Alt-a / Alt-e, which do not
+        -- survive gnome-terminal, tmux, or SSH reliably.)
         keymap = {
-          accept  = '<A-a>',
-          dismiss = '<A-e>',
+          accept  = '<Plug>(minuet-accept-unused)',
+          dismiss = '<Plug>(minuet-dismiss-unused)',
         },
       },
       notify = 'error',  -- quiet unless something is actually broken
