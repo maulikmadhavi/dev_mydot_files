@@ -1,6 +1,6 @@
 # Cheatsheet
 
-Quick reference for the tools configured by this repo. Custom mappings (those defined in `.config/nvim/init.vim`, `.zshrc`, etc.) are marked **custom**.
+Quick reference for the tools configured by this repo. Custom mappings (those defined in `.config/nvim/init.lua`, `.zshrc`, etc.) are marked **custom**.
 
 ---
 
@@ -12,7 +12,7 @@ Quick reference for the tools configured by this repo. Custom mappings (those de
 | `i` / `a` | Insert before / after cursor |
 | `I` / `A` | Insert at start / end of line |
 | `o` / `O` | New line below / above |
-| `v` / `V` / `Ctrl-v` | Visual char / line / block |
+| `v` / `V` / `Ctrl-v` | Visual char / line / block (`Space v` for block if the terminal eats `Ctrl-v`) |
 | `:` | Command-line |
 | `Esc` / `Ctrl-[` | Back to Normal |
 
@@ -56,7 +56,7 @@ Quick reference for the tools configured by this repo. Custom mappings (those de
 
 ### System clipboard
 
-This repo sets `clipboard=unnamedplus` in `init.vim`, so the **default register *is* the system clipboard** — plain `y` / `p` / `yy` / `dd` already round-trip to the OS clipboard. You only need explicit register prefixes for the cases below.
+This repo sets `clipboard=unnamedplus` in `init.lua`, so the **default register *is* the system clipboard** — plain `y` / `p` / `yy` / `dd` already round-trip to the OS clipboard. You only need explicit register prefixes for the cases below.
 
 | Key | Action |
 |---|---|
@@ -69,9 +69,9 @@ This repo sets `clipboard=unnamedplus` in `init.vim`, so the **default register 
 
 > **Gotcha 2 — `^M` at end of every pasted line.** That means the paste bypassed `g:clipboard`. The usual cause is `Ctrl-Shift-V` (terminal paste) in **insert mode**, which sends raw bytes — so CRLF from a Windows source (VSCode, Notepad) survives. Fix: paste with `p` in normal mode or `Ctrl-R +` in insert mode — both use `win32yank -o --lf` which strips the CR. To clean an already-polluted file: `:%s/\r$//` (trailing CR) or `:%s/\r//g` (everywhere).
 
-> **Gotcha 3 — `clipboard: No provider` on a remote server.** This means nvim couldn't find a clipboard tool (no xclip / wl-copy / DISPLAY). On SSH sessions the included `init.vim` falls back to **OSC 52** (nvim ≥ 0.10), which pipes yanks back through the terminal to your *local* clipboard. After updating, just `yy` and the line should be on your laptop's clipboard. Paste *into* vim from outside still needs terminal paste (Ctrl-Shift-V) — OSC 52 read is almost never supported by terminals.
+> **Gotcha 3 — `clipboard: No provider` on a remote server.** This means nvim couldn't find a clipboard tool (no xclip / wl-copy / DISPLAY). On SSH sessions the included `init.lua` falls back to **OSC 52** (nvim ≥ 0.10), which pipes yanks back through the terminal to your *local* clipboard. After updating, just `yy` and the line should be on your laptop's clipboard. Paste *into* vim from outside still needs terminal paste (Ctrl-Shift-V) — OSC 52 read is almost never supported by terminals.
 
-### Custom mappings (this repo's `init.vim`)
+### Custom mappings (this repo's `init.lua`)
 
 **Leader is `Space`.** Panel toggles and pickers live behind the leader so they
 don't shadow vim's built-in `Ctrl-` keys (`Ctrl-f` page forward, `Ctrl-l`
@@ -95,7 +95,7 @@ what's deliberately avoided.
 | `Space j` / `Space k` | Move line (or visual selection) down / up — vim-move |
 | `Ctrl-p` | `:Rg` — second binding for the same thing (normal-mode `Ctrl-p` is just `k`) |
 | `F6` / `F7` | Aerial / Floaterm — F-key aliases; `F7` also works from insert and terminal mode |
-| `Tab` / `Shift-Tab` (visual) | Indent right / left (keeps selection; inserts a **hard tab** — `init.vim` has no `expandtab`) |
+| `Tab` / `Shift-Tab` (visual) | Indent right / left (keeps selection; inserts a **hard tab** — `init.lua` has no `expandtab`). Visual mode only — in a snippet placeholder (Select mode) `Tab` still jumps to the next placeholder |
 | `Tab` (insert) | **Smart**: accept AI ghost text if visible → else next completion item → else literal tab |
 | `Shift-Tab` (insert) | Prev completion item (literal shift-tab otherwise) |
 | `Enter` (insert) | Confirm selected completion |
@@ -167,6 +167,21 @@ normally and it applies at every cursor. Requires `:PlugInstall`.
 > `ctrl+v` entry from Windows Terminal's `settings.json` keybindings and paste
 > with `Ctrl-Shift-V`.
 
+### Where the config lives
+
+| OS | nvim reads | `setup` installs to |
+|---|---|---|
+| Linux / WSL / macOS | `~/.config/nvim/init.lua` | stow symlink from this repo |
+| Windows (native) | `%LOCALAPPDATA%\nvim\init.lua` | one-line stub that `dofile`s the repo file (written by `setup_powershell_omp.ps1`) |
+
+The config is a single `init.lua` (plugins still managed by vim-plug). Edit the
+repo file; both machines pick it up on the next nvim start.
+
+> **Gotcha — edits to the repo don't show up on Windows.** Native Windows nvim
+> ignores `~/.config/nvim` unless `XDG_CONFIG_HOME` is set. Check with
+> `:echo $MYVIMRC`. If an old `init.vim` sits next to `init.lua` nvim errors with
+> E5422 — both setup scripts move it aside to `init.vim.bak-<timestamp>`.
+
 ### LSP — Python via basedpyright + ruff (nvim 0.11 built-in keymaps)
 
 basedpyright provides completions/types/auto-imports; ruff lints and **formats on save** (`*.py`).
@@ -209,11 +224,11 @@ Notes:
   `MINUET_MODEL` (skip auto-discovery), `MINUET_API_KEY` (bearer; default `dummy`,
   fine for vLLM).
 
-### Plugin shortcuts in `init.vim`
+### Plugin shortcuts in `init.lua`
 - **vim-surround** — `ysiw)` wrap word in `()`, `cs"'` change `"` → `'`, `ds"` delete surrounding `"`.
 - **Commenting (built into nvim 0.10+)** — `gcc` toggle line comment, `gc<motion>` toggle range (e.g. `gcap` for paragraph, `gc` in visual mode).
 - **vim-visual-multi** — `Ctrl-n` on a word selects it; keep pressing to add the next occurrence (multiple cursors). `q` skips one, `Q` removes a cursor, `Esc` exits. (`Ctrl-n` is exclusively multi-cursor's — NERDTree moved to `Space e`.)
-- **vim-move** — `Space j` / `Space k` move current line or visual selection down / up. (Its `Alt-j`/`Alt-k` defaults are disabled via `g:move_map_keys = 0`; `Alt` is unreliable over SSH and tmux.)
+- **vim-move** — `Space j` / `Space k` move current line or visual selection down / up (Visual mode only, so typing a space over a snippet placeholder isn't swallowed). (Its `Alt-j`/`Alt-k` defaults are disabled via `g:move_map_keys = 0`; `Alt` is unreliable over SSH and tmux.)
 - **vim-fugitive** — `:Git` status, `:Git blame`, `:Gdiffsplit`, `:Git log`.
 - **gitsigns.nvim** — change markers in the gutter automatically; on demand: `:Gitsigns blame_line`, `:Gitsigns preview_hunk`, `:Gitsigns reset_hunk`. No keymaps by design.
 - **nvim-autopairs** — auto-closes `()[]{}`""''` as you type; accepting a function completion inserts `()` with the cursor inside.

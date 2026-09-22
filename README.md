@@ -92,7 +92,7 @@ After install, configure your terminal (Windows Terminal, etc.) to use **FiraCod
 ### `setup.sh` (Linux)
 - Installs [`pixi`](https://pixi.sh), then via pixi: `tmux`, `nvim`, `zsh`, `fzf`, `stow`, `python-lsp-server`, `tree`, `diskus`, `xclip`, `yarn`, `git`.
 - Installs `nvm` + Node LTS.
-- Installs `vim-plug` and runs `:PlugInstall` for the plugins in `.config/nvim/init.vim`.
+- Installs `vim-plug` and runs `:PlugInstall` for the plugins in `.config/nvim/init.lua`.
 - Initializes the `oh-my-zsh` submodule and symlinks it to `~/.oh-my-zsh`.
 - Clones `zsh-autosuggestions` and `zsh-syntax-highlighting`.
 - Uses `stow` to symlink every tracked dotfile into `$HOME`.
@@ -101,7 +101,7 @@ After install, configure your terminal (Windows Terminal, etc.) to use **FiraCod
 ### `setup_powershell_omp.ps1` (Windows)
 - Installs `pixi`, then via pixi: `yarn`, `python-lsp-server`, `fzf`, `diskus`, `ripgrep`, `eza`, `gcc`, `gxx`, `make`, `cmake`.
 - Installs `git`, `oh-my-posh`, `PSReadLine`, FiraCode Nerd Font, Neovim, `psmux` (tmux for Windows).
-- Installs `vim-plug` and copies `init.vim` into `$HOME\.config\nvim\`.
+- Installs `vim-plug` and writes a one-line `%LOCALAPPDATA%\nvim\init.lua` stub that loads the repo's `.config/nvim/init.lua`, so Windows and WSL share one config.
 - Writes `$PROFILE` with: oh-my-posh init (custom `zash.omp.json` theme), PSReadLine predictive autocomplete, and Linux-style aliases (`ls`, `cat`, `grep`, …). Idempotent — safe to re-run without duplicating lines.
 
 ---
@@ -110,7 +110,7 @@ After install, configure your terminal (Windows Terminal, etc.) to use **FiraCod
 
 - **`secret.sh`** — intentionally not in the repo. Create `~/.secret.sh` manually for machine-specific env vars; `.bashrc` will source it if present.
 - **`oh-my-zsh`** — included as a git submodule and symlinked manually (not stowed) to avoid NTFS permission issues on WSL.
-- **Clipboard on WSL** — install [`win32yank.exe`](https://github.com/equalsraf/win32yank) on the Windows side for bidirectional nvim ↔ Windows clipboard. The init.vim auto-detects WSL and uses it.
+- **Clipboard on WSL** — install [`win32yank.exe`](https://github.com/equalsraf/win32yank) on the Windows side for bidirectional nvim ↔ Windows clipboard. The nvim config auto-detects WSL and uses it.
 - **Clipboard on bare Linux** — `xclip` (installed by `setup.sh`) covers X11. Wayland users: `sudo apt install wl-clipboard` separately.
 
 ## Troubleshooting

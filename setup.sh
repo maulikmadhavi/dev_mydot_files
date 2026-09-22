@@ -92,9 +92,17 @@ pixi global install b3sum  2>/dev/null || echo "Note: b3sum unavailable on this 
 # === 2. Clean conflicting configs
 
 step
-if [ -f ~/.config/nvim/init.vim ] && [ -f ~/.config/nvim/init.lua ]; then
-    echo "Removing conflicting init.vim (keeping init.lua)"
-    rm ~/.config/nvim/init.vim
+# This repo ships init.lua (stowed in step 6). nvim errors (E5422) if an
+# init.vim sits beside it. A symlink into this repo is left over from when the
+# repo shipped init.vim, so drop it; anything else is moved aside, never deleted.
+OLD_INIT_VIM=~/.config/nvim/init.vim
+if [ -L "$OLD_INIT_VIM" ] && [[ "$(readlink -f "$OLD_INIT_VIM")" == */mydot_files/* ]]; then
+    echo "Removing old init.vim symlink (repo now uses init.lua)"
+    rm -f "$OLD_INIT_VIM"
+elif [ -e "$OLD_INIT_VIM" ] || [ -L "$OLD_INIT_VIM" ]; then
+    backup="$OLD_INIT_VIM.bak-$(date +%Y%m%d%H%M%S)"
+    echo "Moving conflicting $OLD_INIT_VIM to $backup (repo uses init.lua)"
+    mv "$OLD_INIT_VIM" "$backup" || fail_step
 fi
 
 # === 3. nvm + Node LTS
@@ -157,7 +165,7 @@ done < <(find "$HOME" -maxdepth 3 \
 # stow can't abort on it and nothing is lost. Deleting rc files earlier (old
 # behaviour) left the shell unconfigured whenever a later step failed.
 BACKUP_DIR="$HOME/.dotfiles_backup_$(date +%Y%m%d_%H%M%S)"
-for f in .zshrc .bashrc .bash_aliases .vimrc utils.sh .config/nvim/init.vim; do
+for f in .zshrc .bashrc .bash_aliases .vimrc utils.sh .config/nvim/init.lua; do
     if [ -e "$HOME/$f" ] && [ ! -L "$HOME/$f" ]; then
         mkdir -p "$BACKUP_DIR/$(dirname "$f")"
         echo "Backing up existing ~/$f to $BACKUP_DIR/$f"
@@ -204,6 +212,13 @@ nvim --headless +PlugInstall +PlugClean! +qall 2>/dev/null || {
     echo "Warning: nvim PlugInstall had issues but continuing"
     fail_step
 }
+# nvim exits 0 even when init.lua errors out before plug#end() (e.g. CRLF line
+# endings), so check that plugins actually landed.
+if [ -z "$(ls -A ~/.config/nvim/plugged 2>/dev/null)" ]; then
+    echo "Warning: no plugins in ~/.config/nvim/plugged — init.lua probably failed to load."
+    echo "         Run: nvim --headless +qa   to see the error."
+    fail_step
+fi
 
 # === 9. Switch default shell to zsh (best-effort; needs no sudo)
 

@@ -1,0 +1,4 @@
+# This checkout is shared with WSL (stow symlinks point into it), so files must
+# stay LF even when Windows git has core.autocrlf=true. CRLF breaks init.lua
+# (E492 ^M on every line) and sourced shell scripts on Linux.
+* text=auto eol=lf

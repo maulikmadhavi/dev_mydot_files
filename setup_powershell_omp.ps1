@@ -1,4 +1,4 @@
-# PowerShell Oh-My-Posh Setup Script for Windows
+﻿# PowerShell Oh-My-Posh Setup Script for Windows
 # Installs the Windows toolchain and configures $PROFILE for oh-my-posh,
 # Neovim, PSReadLine, and Linux-style aliases.
 
@@ -193,14 +193,37 @@ Install-WithFeedback "Neovim" {
 }
 
 Write-Host "`n[*] Setting up Neovim plug-in manager (vim-plug)..." -ForegroundColor Cyan
-$destNvimConfigDir = "$HOME\.config\nvim"
+# Windows nvim reads stdpath('config') = %LOCALAPPDATA%\nvim, not ~/.config/nvim
+# (unless XDG_CONFIG_HOME is set); its data dir is %LOCALAPPDATA%\nvim-data.
+$destNvimConfigDir = "$env:LOCALAPPDATA\nvim"
 if (-not (Test-Path $destNvimConfigDir)) {
     New-Item -ItemType Directory -Path $destNvimConfigDir -Force | Out-Null
 }
-Copy-Item -Path ".\.config\nvim\init.vim" -Destination (Join-Path $destNvimConfigDir "init.vim") -Force
-Write-Host "[OK] Neovim configuration copied successfully" -ForegroundColor Green
+# init.vim and init.lua side by side is an error (E5422). Stubs this script
+# wrote earlier are replaced; any other config is moved aside, never deleted.
+$stubMarker = 'Stub written by mydot_files'
+foreach ($name in 'init.vim', 'init.lua') {
+    $p = Join-Path $destNvimConfigDir $name
+    if (-not (Test-Path $p)) { continue }
+    if (Select-String -Path $p -SimpleMatch $stubMarker -Quiet) {
+        Remove-Item $p
+    } else {
+        $backup = "$p.bak-$(Get-Date -Format yyyyMMddHHmmss)"
+        Move-Item $p $backup
+        Write-Host "[!] Moved existing $name to $backup" -ForegroundColor Yellow
+    }
+}
+# A stub that loads the repo file (not a copy), so edits to the repo apply to
+# Windows nvim immediately and never drift. No symlink: that needs admin or
+# Developer Mode on Windows.
+$repoInitLua = (Resolve-Path ".\.config\nvim\init.lua").Path
+Set-Content -Path (Join-Path $destNvimConfigDir "init.lua") -Encoding ascii -Value @(
+    "-- $stubMarker/setup_powershell_omp.ps1 - edit the repo file, not this one.",
+    "dofile([[$repoInitLua]])"
+)
+Write-Host "[OK] Neovim init.lua now loads $repoInitLua" -ForegroundColor Green
 
-$plugVimPath = "$HOME\.local\share\nvim\site\autoload\plug.vim"
+$plugVimPath = "$env:LOCALAPPDATA\nvim-data\site\autoload\plug.vim"
 $plugVimDir = Split-Path $plugVimPath -Parent
 if (-not (Test-Path $plugVimDir)) {
     New-Item -ItemType Directory -Path $plugVimDir -Force | Out-Null
