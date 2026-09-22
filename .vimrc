@@ -11,6 +11,6 @@ set softtabstop=2
 set expandtab
 set noshiftround
 
-" turn relative line numbers on
-:set relativenumber
-:set rnu
+" Display
+set number
+set relativenumber

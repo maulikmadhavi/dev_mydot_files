@@ -1,18 +1,37 @@
+" ============================================================
+" [OPTIONS]
+" ============================================================
+set encoding=utf-8
 
-:set showmatch      " show matching
-:set number         " add line number
-:set relativenumber " add relative number
-:set smarttab       " smart tab
-:set autoindent     " indent a new line the same amount as the line just typed
-:set tabstop=4      " 
-:set wildmode=longest,list " set bash-like tab-completion
-:set shiftwidth=4
-:set softtabstop=4
-:set mouse=a
-:set cc=120        " For good coding style
-:syntax on          " syntax highlight
-:set clipboard=unnamedplus  " using system clipboard
+" Whitespace / indentation
+set wrap
+set textwidth=79
+set formatoptions=tcqrn1
+set tabstop=4
+set shiftwidth=4
+set softtabstop=4
+set expandtab
+set noshiftround
+set smarttab
+set autoindent
 
+" Display
+set showmatch
+set number
+set relativenumber
+set wildmode=longest,list
+set mouse=a
+set cc=120
+set cursorline
+set ttyfast           " speed up scrolling in Vim
+set undofile          " persistent undo across sessions (pairs with <leader>u Undotree)
+
+syntax on
+set clipboard=unnamedplus
+
+" ============================================================
+" [CLIPBOARD] — WSL / SSH clipboard
+" ============================================================
 " WSL: clip.exe is write-only and nvim's auto-detect is unreliable here.
 " Copies go through jobstart (fire-and-forget) so every y/dd/x does not
 " block ~80ms on the Windows process; paste stays synchronous.
@@ -61,14 +80,74 @@ elseif !empty($SSH_TTY) && has('nvim-0.10')
     \ },
   \ }
 endif
-:set cursorline   " highlight current cursorline
-:set ttyfast      " seepd up scrorring in Vim
-:set undofile     " persistent undo across sessions (pairs with Ctrl-l Undotree)
-	
 
 " ============================================================
-" Keybinding policy: identical behaviour on Windows PowerShell,
-" WSL, and bare Linux — including over SSH, tmux and screen.
+" [PLUGINS]
+" ============================================================
+" Plugin variable defaults (must be set before plug#end)
+let g:move_map_keys = 0           " vim-move: disable default Alt-j/k; remapped to <leader>J/K below
+let g:NERDTreeDirArrowExpandable  = "+"
+let g:NERDTreeDirArrowCollapsible = "~"
+
+call plug#begin('~/.config/nvim/plugged')
+
+" Completion engine
+Plug 'hrsh7th/nvim-cmp'
+Plug 'hrsh7th/cmp-buffer'
+Plug 'hrsh7th/cmp-path'
+Plug 'hrsh7th/cmp-nvim-lsp'
+Plug 'hrsh7th/cmp-nvim-lsp-signature-help'
+" Snippets expand via nvim 0.10+'s built-in vim.snippet — no extra plugin needed.
+
+" LSP server config
+Plug 'neovim/nvim-lspconfig'
+
+" AI ghost-text completion (Copilot-style) from a local OpenAI-compatible server
+Plug 'nvim-lua/plenary.nvim'          " required by minuet
+Plug 'milanglacier/minuet-ai.nvim'
+
+" Editing utilities
+Plug 'http://github.com/tpope/vim-surround'           " Surrounding ysw)
+Plug 'https://github.com/mg979/vim-visual-multi'       " CTRL+N multiple cursors
+Plug 'https://github.com/matze/vim-move'               " Move lines/blocks
+Plug 'windwp/nvim-autopairs'                           " Auto-close brackets/quotes
+
+" File / search
+Plug 'https://github.com/preservim/nerdtree'           " File explorer
+Plug 'https://github.com/junegunn/fzf'
+Plug 'https://github.com/junegunn/fzf.vim'             " :Files :Rg (ripgrep required)
+
+" UI / appearance
+Plug 'https://github.com/vim-airline/vim-airline'      " Status bar
+Plug 'https://github.com/vim-airline/vim-airline-themes'
+Plug 'https://github.com/ryanoasis/vim-devicons'       " Developer icons
+Plug 'https://github.com/navarasu/onedark.nvim'        " Colorscheme
+
+" Code intelligence
+Plug 'stevearc/aerial.nvim', {'branch': 'nvim-0.11'}  " Code outline (LSP/treesitter)
+Plug 'https://github.com/mbbill/undotree'              " Visual undo history
+Plug 'nvim-treesitter/nvim-treesitter', {'branch': 'master', 'do': ':TSUpdate'}
+
+" Git
+Plug 'https://github.com/tpope/vim-fugitive'
+Plug 'lewis6991/gitsigns.nvim'
+
+" Language support
+Plug 'https://github.com/lepture/vim-jinja'
+Plug 'alvan/vim-closetag'
+
+call plug#end()
+
+" ============================================================
+" [APPEARANCE]
+" ============================================================
+silent! colorscheme onedark
+
+" ============================================================
+" [KEYBINDINGS]
+" ============================================================
+" Policy: identical behaviour on Windows PowerShell, WSL, and bare Linux —
+" including over SSH, tmux and screen.
 "
 "   Use:    <leader> (Space) + letter, and plain Ctrl+letter.
 "   Avoid:  Alt/Meta      — gnome-terminal steals Alt-f/e/v/s/t/h for its
@@ -78,127 +157,58 @@ endif
 "           <C-v>, <C-c>  — Windows Terminal binds both to paste/copy, so
 "                           they never reach nvim.
 "           <C-s>, <C-q>  — terminal flow control (XON/XOFF).
-" ============================================================
 let mapleader = " "
 nnoremap <Space> <Nop>
 
-" vim-move defaults to Alt-h/j/k/l; remapped to <leader>j/k after plug#end().
-let g:move_map_keys = 0
-
-let g:NERDTreeDirArrowExpandable="+"
-let g:NERDTreeDirArrowCollapsible="~"
-
+" --- File / search ---
 nnoremap <leader>e :NERDTreeToggle<CR>
 nnoremap <leader>f :Files<CR>
 nnoremap <leader>r :Rg<CR>
-nnoremap <leader>u :UndotreeToggle<CR>
-" Blockwise-visual (multiline column edit). Windows Terminal binds ctrl+v to
-" paste, so plain <C-v> never reaches nvim there — and VS Code's terminal and
-" most SSH clients have the same habit. <leader>v always gets through.
-nnoremap <leader>v <C-v>
-" Panel toggles also have F-key bindings below; these leader aliases work even
-" where function keys are mangled (screen/tmux without matching terminfo).
-nnoremap <leader>t :FloatermToggle<CR>
-nnoremap <leader>o :AerialToggle<CR>
-" Ctrl-p kept as a second binding for :Rg — in normal mode it is just a
-" synonym for `k`, so it shadows nothing worth keeping. (Ctrl-r is
-" deliberately left alone: it is vim's redo.)
+" Ctrl-p as a second binding for :Rg (shadows `k` synonym, which is fine)
 nnoremap <C-p> :Rg<CR>
 
-" NERDTree used to own Ctrl-n as well, but vim-visual-multi defaults to
-" Ctrl-n and its plugin file is sourced at plug#end() — i.e. after this
-" point — so that mapping was being silently overwritten anyway.
-" Multi-cursor keeps Ctrl-n; the file explorer is <leader>e.
-
-" Floating terminal on F7 (pairs with F6 Aerial). It has to work from insert
-" and terminal mode too, where <leader> cannot reach, so it gets an F-key
-" instead of a leader mapping.
+" --- Panels / toggles ---
+nnoremap <leader>u :UndotreeToggle<CR>
+nnoremap <leader>t :FloatermToggle<CR>
+nnoremap <leader>o :AerialToggle<CR>
+" F-key aliases work where function keys survive (screen/tmux/SSH)
+nnoremap <F6> :AerialToggle<CR>
 nnoremap <F7> :FloatermToggle<CR>
 inoremap <F7> <Esc>:FloatermToggle<CR>
 tnoremap <F7> <C-\><C-n>:FloatermToggle<CR>
 
-
-" Insert-mode <Tab>/<S-Tab> are smart mappings defined in the lua block below:
-" accept AI ghost text > navigate completion menu > literal tab.
-" <CR> confirm is handled by nvim-cmp mapping below.
-
-" Use <Tab> to indent selected lines in visual mode
-vnoremap <Tab> >gv
+" --- Editing ---
+" Blockwise-visual: Windows Terminal binds <C-v> to paste, so use <leader>v
+nnoremap <leader>v <C-v>
+" Indent/unindent selection, keeping the visual range
+vnoremap <Tab>   >gv
 vnoremap <S-Tab> <gv
+" Move lines/blocks (uppercase avoids conflict with j/k cursor motion)
+nmap <leader>J <Plug>MoveLineDown
+nmap <leader>K <Plug>MoveLineUp
+vmap <leader>J <Plug>MoveBlockDown
+vmap <leader>K <Plug>MoveBlockUp
 
-" coc.nvim disabled in favor of nvim-cmp + nvim-lspconfig
-" let g:coc_snippet_next = '<Tab>'
-" let g:coc_snippet_prev = '<S-Tab>'
+" --- Window navigation ---
+nnoremap <C-h> <C-w>h
+nnoremap <C-j> <C-w>j
+nnoremap <C-k> <C-w>k
+nnoremap <C-l> <C-w>l
 
-nnoremap <F6> :AerialToggle<CR>
-
-call plug#begin('~/.config/nvim/plugged')
-
-" Add your plugins here
-" coc.nvim disabled; using nvim-cmp + nvim-lspconfig instead.
-" Plug 'neoclide/coc.nvim', {'branch': 'release'}
-Plug 'hrsh7th/nvim-cmp'
-Plug 'hrsh7th/cmp-buffer'
-Plug 'hrsh7th/cmp-path'
-Plug 'hrsh7th/cmp-nvim-lsp'
-Plug 'hrsh7th/cmp-nvim-lsp-signature-help'
-" Snippets in LSP completions expand via nvim 0.10+'s built-in vim.snippet —
-" no snippet-engine plugin needed.
-
-" LSP server config
-Plug 'neovim/nvim-lspconfig'
-
-" AI ghost-text completion (Copilot-style) from a local OpenAI-compatible server
-Plug 'nvim-lua/plenary.nvim'          " required by minuet
-Plug 'milanglacier/minuet-ai.nvim'
-
-" (vim-commentary removed: gcc/gc commenting is built into nvim 0.10+)
-Plug 'http://github.com/tpope/vim-surround' " Surrounding ysw)
-Plug 'https://github.com/preservim/nerdtree' ", {'on': 'NERDTreeToggle'}
-Plug 'https://github.com/vim-airline/vim-airline' " Status bar
-Plug 'https://github.com/ryanoasis/vim-devicons' " Developer Icons
-" nvim-0.11 branch: aerial's master requires nvim 0.12+
-Plug 'stevearc/aerial.nvim', {'branch': 'nvim-0.11'} " Code outline from LSP/treesitter (no ctags needed)
-Plug 'https://github.com/junegunn/fzf.vim' " Fuzzy Finder; :Rg needs ripgrep (installed by setup)
-Plug 'https://github.com/junegunn/fzf'
-Plug 'https://github.com/navarasu/onedark.nvim'
-Plug 'https://github.com/vim-airline/vim-airline-themes'
-Plug 'https://github.com/mbbill/undotree'
-" Plug 'neoclide/coc.nvim', {'branch': 'release'}
-Plug 'https://github.com/lepture/vim-jinja'
-Plug 'https://github.com/tpope/vim-fugitive'
-Plug 'lewis6991/gitsigns.nvim' " Git change markers in the gutter
-Plug 'windwp/nvim-autopairs'   " Auto-close brackets/quotes
-" vim-multiple-cursors is archived upstream; vim-visual-multi is its
-" successor with the same Ctrl-N workflow.
-Plug 'https://github.com/mg979/vim-visual-multi'  " CTRL + N for multiple cursors
-Plug 'https://github.com/matze/vim-move'
-Plug 'voldikss/vim-floaterm'
-" master branch: frozen but stable; the rewritten main branch needs the
-" tree-sitter CLI installed, which we don't ship.
-Plug 'nvim-treesitter/nvim-treesitter', {'branch': 'master', 'do': ':TSUpdate'} " Parser-based highlighting
-Plug 'alvan/vim-closetag'
-call plug#end()
-
-" silent! — first launch before :PlugInstall must not error
-silent! colorscheme onedark
-
-" vim-move on <leader>j/k instead of its default Alt-j/Alt-k (see the
-" keybinding policy at the top). <Plug> targets require map, not noremap.
-nmap <leader>j <Plug>MoveLineDown
-nmap <leader>k <Plug>MoveLineUp
-vmap <leader>j <Plug>MoveBlockDown
-vmap <leader>k <Plug>MoveBlockUp
+" --- Quality of life ---
+nnoremap <leader>w :w<CR>
+nnoremap <leader>h :nohlsearch<CR>
 
 " ============================================================
-" LSP completion (nvim-cmp + nvim-lspconfig)
+" [LUA CONFIG]
 " ============================================================
 lua << EOF
-local ok_cmp, cmp           = pcall(require, 'cmp')
+
+-- ── LSP + nvim-cmp ──────────────────────────────────────────────────────────
+local ok_cmp,    cmp          = pcall(require, 'cmp')
 local ok_cmplsp, cmp_nvim_lsp = pcall(require, 'cmp_nvim_lsp')
--- nvim-lspconfig is required only as a *source of default server configs*
--- (it ships `lsp/<server>.lua` files picked up by nvim 0.11's vim.lsp.config).
--- We don't call into its deprecated framework API. Presence-check via rtp:
+-- nvim-lspconfig is used as a source of default server configs (lsp/*.lua).
+-- Presence-check via runtime path:
 local lspconfig_present = #vim.api.nvim_get_runtime_file('lsp/basedpyright.lua', false) > 0
 
 if not (ok_cmp and ok_cmplsp and lspconfig_present) then
@@ -215,12 +225,10 @@ cmp.setup({
   },
   mapping = cmp.mapping.preset.insert({
     ['<CR>']      = cmp.mapping.confirm({ select = false }),
-    -- <C-l> is the portable trigger; <C-Space> kept for muscle memory but it
-    -- is unreliable (NUL byte, and IBus grabs it on Ubuntu).
+    -- <C-l> portable trigger; <C-Space> kept for muscle memory (unreliable on Ubuntu)
     ['<C-l>']     = cmp.mapping.complete(),
     ['<C-Space>'] = cmp.mapping.complete(),
-    -- Accept: AI ghost text > selected completion > literal key. Replaces the
-    -- old Alt-a, which gnome-terminal and SSH sessions both mangle.
+    -- Accept: AI ghost text > selected completion > literal key
     ['<C-y>'] = cmp.mapping(function(fallback)
       local ok_vt, vt = pcall(require, 'minuet.virtualtext')
       if ok_vt and vt.action.is_visible() then
@@ -231,12 +239,9 @@ cmp.setup({
         fallback()
       end
     end, { 'i' }),
-    -- Dismiss: AI ghost text > completion popup > literal key (was Alt-e,
-    -- which collides with gnome-terminal's Edit menu).
+    -- Dismiss: AI ghost text > completion popup > literal key
     ['<C-e>'] = cmp.mapping(function(fallback)
       local ok_vt, vt = pcall(require, 'minuet.virtualtext')
-      -- Guarded: if minuet ever renames action.dismiss, fall through to cmp
-      -- rather than throwing on every Ctrl-e.
       if ok_vt and vt.action.is_visible() and vt.action.dismiss then
         vt.action.dismiss()
       elseif cmp.visible() then
@@ -245,8 +250,7 @@ cmp.setup({
         fallback()
       end
     end, { 'i' }),
-    -- Smart Tab (Copilot/VS Code feel): accept grey AI ghost text if visible,
-    -- else navigate the completion menu, else insert a literal tab.
+    -- Smart Tab: accept AI ghost text > navigate completion menu > literal tab
     ['<Tab>'] = cmp.mapping(function(fallback)
       local ok_vt, vt = pcall(require, 'minuet.virtualtext')
       if ok_vt and vt.action.is_visible() then
@@ -261,34 +265,42 @@ cmp.setup({
       if cmp.visible() then cmp.select_prev_item() else fallback() end
     end, { 'i' }),
   }),
-  -- LSP first (high priority), then snippets/buffer/path.
+  -- LSP first (high priority), then buffer/path.
   sources = cmp.config.sources({
-    { name = 'nvim_lsp', priority = 1000 },
-    { name = 'nvim_lsp_signature_help' },  -- param hints while typing, like VS Code
+    { name = 'nvim_lsp',                  priority = 1000 },
+    { name = 'nvim_lsp_signature_help' },  -- param hints while typing
   }, {
     { name = 'buffer' },
     { name = 'path'   },
   }),
-  -- Inline preview of the selected completion, like VS Code's ghost text.
-  experimental = { ghost_text = true },
+  experimental = { ghost_text = true },  -- inline preview like VS Code
 })
 
--- Python LSP, VS Code-style: basedpyright (open-source Pylance equivalent —
--- typed completions, auto-imports, hover) + ruff (lint + format, same tool
--- as the VS Code ruff extension). nvim 0.11+ API: vim.lsp.config merges over
--- nvim-lspconfig's lsp/<server>.lua defaults; vim.lsp.enable starts them.
+-- ── LSP servers ─────────────────────────────────────────────────────────────
+-- Python: basedpyright (open-source Pylance) + ruff (lint + format).
+-- nvim 0.11+ API: vim.lsp.config merges over nvim-lspconfig defaults.
 local caps = cmp_nvim_lsp.default_capabilities()
 vim.lsp.config('basedpyright', { capabilities = caps })
 vim.lsp.config('ruff',         { capabilities = caps })
 vim.lsp.enable({ 'basedpyright', 'ruff' })
 
--- ruff also answers hover requests; keep hover exclusively on basedpyright.
+-- ruff also answers hover; keep hover exclusively on basedpyright.
 vim.api.nvim_create_autocmd('LspAttach', {
   callback = function(args)
     local client = vim.lsp.get_client_by_id(args.data.client_id)
     if client and client.name == 'ruff' then
       client.server_capabilities.hoverProvider = false
     end
+
+    -- LSP keybindings — scoped to the buffer that just attached an LSP client
+    local opts = { buffer = args.buf, silent = true }
+    vim.keymap.set('n', 'gd',         vim.lsp.buf.definition,   opts)
+    vim.keymap.set('n', 'gr',         vim.lsp.buf.references,   opts)
+    vim.keymap.set('n', 'K',          vim.lsp.buf.hover,        opts)
+    vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action,  opts)
+    vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename,       opts)
+    vim.keymap.set('n', ']d', vim.diagnostic.goto_next, opts)
+    vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, opts)
   end,
 })
 
@@ -302,16 +314,16 @@ vim.api.nvim_create_autocmd('BufWritePre', {
   end,
 })
 
--- Code outline on F6 (replaces tagbar; reads LSP/treesitter, no ctags binary).
+-- Show diagnostic messages inline (nvim 0.11 turned virtual_text off by default).
+vim.diagnostic.config({ virtual_text = true })
+
+-- ── Code outline ─────────────────────────────────────────────────────────────
+-- Aerial: replaces tagbar; reads LSP/treesitter, no ctags binary required.
 local ok_aerial, aerial = pcall(require, 'aerial')
 if ok_aerial then aerial.setup({}) end
 
--- Show diagnostic messages inline, VS Code-style (nvim 0.11 turned
--- virtual-text diagnostics off by default — only underlines/signs remain).
-vim.diagnostic.config({ virtual_text = true })
-
--- Auto-close brackets/quotes; the cmp hook appends () and places the cursor
--- inside when a function/method completion is accepted (Pylance behaviour).
+-- ── Autopairs ────────────────────────────────────────────────────────────────
+-- Auto-close brackets/quotes; cmp hook appends () on function completions.
 local ok_pairs, npairs = pcall(require, 'nvim-autopairs')
 if ok_pairs then
   npairs.setup({})
@@ -321,42 +333,54 @@ if ok_pairs then
   end
 end
 
--- Git change markers in the gutter. Deliberately NO keymaps — operations are
--- available as commands when needed (:Gitsigns blame_line, :Gitsigns
--- preview_hunk, :Gitsigns reset_hunk).
+-- ── Gitsigns ─────────────────────────────────────────────────────────────────
+-- Git change markers in the gutter + hunk navigation.
 local ok_gs, gitsigns = pcall(require, 'gitsigns')
-if ok_gs then gitsigns.setup({}) end
+if ok_gs then
+  gitsigns.setup({
+    on_attach = function(bufnr)
+      local gs   = package.loaded.gitsigns
+      local opts = { buffer = bufnr, silent = true }
+      vim.keymap.set('n', ']c', gs.next_hunk, opts)
+      vim.keymap.set('n', '[c', gs.prev_hunk, opts)
+    end,
+  })
+end
 
--- Reopen a file at the last cursor position (VS Code does this by default).
-vim.api.nvim_create_autocmd('BufReadPost', {
-  callback = function(ev)
-    local mark = vim.api.nvim_buf_get_mark(ev.buf, '"')
-    if mark[1] > 0 and mark[1] <= vim.api.nvim_buf_line_count(ev.buf) then
-      pcall(vim.api.nvim_win_set_cursor, 0, mark)
-    end
-  end,
-})
+-- ── Treesitter ───────────────────────────────────────────────────────────────
+-- Handles both nvim-treesitter APIs: frozen `master` branch (configs.setup)
+-- and the rewritten `main` branch (install + vim.treesitter.start via autocmd).
+local ts_langs = { 'python', 'bash', 'lua', 'vim', 'json', 'yaml', 'markdown' }
+local ok_ts_configs, ts_configs = pcall(require, 'nvim-treesitter.configs')
+if ok_ts_configs and ts_configs.setup then
+  ts_configs.setup({ ensure_installed = ts_langs, highlight = { enable = true } })
+elseif pcall(require, 'nvim-treesitter') then
+  require('nvim-treesitter').install(ts_langs)
+  vim.api.nvim_create_autocmd('FileType', {
+    pattern  = ts_langs,
+    callback = function() pcall(vim.treesitter.start) end,
+  })
+end
 
--- ============================================================
--- AI ghost-text completion (minuet-ai) — Copilot-style inline
--- suggestions from a local OpenAI-compatible server (vLLM,
--- llama.cpp, LM Studio, Ollama...).
+-- ── AI ghost-text (minuet-ai) ────────────────────────────────────────────────
+-- Copilot-style inline suggestions from a local OpenAI-compatible server
+-- (vLLM, llama.cpp, LM Studio, Ollama…).
 --
---   Zero config: the served model is auto-discovered from GET /v1/models.
---   If the server is unreachable, AI completion silently stays off.
+-- Zero config: the served model is auto-discovered from GET /v1/models.
+-- If the server is unreachable, AI completion silently stays off.
 --
---   Optional env overrides:
---     MINUET_ENDPOINT  base URL   (default http://localhost:8000/v1)
---     MINUET_MODEL     model id   (default: first model the server lists)
---     MINUET_API_KEY   bearer     (default "dummy"; vLLM ignores it)
+-- Optional env overrides:
+--   MINUET_ENDPOINT  base URL   (default http://localhost:8000/v1)
+--   MINUET_MODEL     model id   (default: first model the server lists)
+--   MINUET_API_KEY   bearer     (default "dummy"; vLLM ignores it)
 --
---   Keys while a grey suggestion is visible:  Tab or Ctrl-y accept,
---   Ctrl-e dismiss (all defined in cmp.setup's mapping table above).
--- ============================================================
+-- Keys while a grey suggestion is visible: Tab or Ctrl-y accept, Ctrl-e dismiss
+-- (all defined in cmp.setup's mapping table above).
 local ok_minuet, minuet = pcall(require, 'minuet')
 if ok_minuet then
   local base = (vim.env.MINUET_ENDPOINT or 'http://localhost:8000/v1'):gsub('/+$', '')
   vim.env.MINUET_API_KEY = vim.env.MINUET_API_KEY or 'dummy'
+
   local function setup_minuet(model)
     minuet.setup({
       provider = 'openai_compatible',
@@ -372,10 +396,7 @@ if ok_minuet then
       },
       virtualtext = {
         auto_trigger_ft = { '*' },
-        -- Accept/dismiss are handled by the <Tab>/<C-y>/<C-e> chains in
-        -- cmp.setup above, so minuet's own keymaps are pointed at unreachable
-        -- <Plug> pseudo-keys. (Its defaults were Alt-a / Alt-e, which do not
-        -- survive gnome-terminal, tmux, or SSH reliably.)
+        -- Accept/dismiss handled by <Tab>/<C-y>/<C-e> in cmp.setup above.
         keymap = {
           accept  = '<Plug>(minuet-accept-unused)',
           dismiss = '<Plug>(minuet-dismiss-unused)',
@@ -384,14 +405,14 @@ if ok_minuet then
       notify = 'error',  -- quiet unless something is actually broken
     })
     -- setup runs async (after model discovery), which is later than the
-    -- FileType event of buffers opened at launch — minuet's auto-trigger
-    -- autocmd missed them, so flip its per-buffer flag here directly.
+    -- FileType event for buffers opened at launch — flip the per-buffer flag.
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
       if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].buftype == '' then
         vim.b[buf].minuet_virtual_text_auto_trigger = true
       end
     end
   end
+
   if vim.env.MINUET_MODEL then
     setup_minuet(vim.env.MINUET_MODEL)
   else
@@ -408,22 +429,15 @@ if ok_minuet then
   end
 end
 
--- (Smart <Tab>/<S-Tab> live in cmp.setup's mapping table above — cmp's
--- fallback() feeds the original key without reordering fast typing.)
+-- ── Utilities ────────────────────────────────────────────────────────────────
+-- Reopen a file at the last cursor position (VS Code does this by default).
+vim.api.nvim_create_autocmd('BufReadPost', {
+  callback = function(ev)
+    local mark = vim.api.nvim_buf_get_mark(ev.buf, '"')
+    if mark[1] > 0 and mark[1] <= vim.api.nvim_buf_line_count(ev.buf) then
+      pcall(vim.api.nvim_win_set_cursor, 0, mark)
+    end
+  end,
+})
 
--- Treesitter highlighting. Handles both nvim-treesitter APIs: the frozen
--- `master` branch (configs.setup) and the rewritten `main` branch
--- (install + vim.treesitter.start via autocmd).
-local ts_langs = { 'python', 'bash', 'lua', 'vim', 'json', 'yaml', 'markdown' }
-local ok_ts_configs, ts_configs = pcall(require, 'nvim-treesitter.configs')
-if ok_ts_configs and ts_configs.setup then
-  ts_configs.setup({ ensure_installed = ts_langs, highlight = { enable = true } })
-elseif pcall(require, 'nvim-treesitter') then
-  require('nvim-treesitter').install(ts_langs)
-  vim.api.nvim_create_autocmd('FileType', {
-    pattern = ts_langs,
-    callback = function() pcall(vim.treesitter.start) end,
-  })
-end
 EOF
-
