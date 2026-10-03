@@ -1,388 +1,311 @@
 # Cheatsheet
 
-Quick reference for the tools configured by this repo. Custom mappings (those defined in `.config/nvim/init.lua`, `.zshrc`, etc.) are marked **custom**.
+Quick reference for the tools this repo configures. Start with the decision
+trees, then look up details below. Something not working? Jump to
+[Keys not working?](#keys-not-working).
+
+[Which tool when](#which-tool-when) · [Neovim](#neovim) · [Keys not working?](#keys-not-working) · [Search from the shell](#search-from-the-shell) · [Shell](#shell-zsh--fzf) · [tmux / screen](#tmux--screen) · [Small tools](#small-tools)
 
 ---
 
-## Neovim / Vim
+## Which tool when
 
-### Modes
-| Key | Mode |
+```
+Find…
+├─ a file by NAME
+│  ├─ anywhere under ~, instantly ........ plocate name           index refreshes daily
+│  ├─ in this project, in nvim ........... Space f                fuzzy
+│  └─ in this project, at the prompt ..... Ctrl-t                 fzf, pastes the path
+├─ TEXT inside files
+│  ├─ in nvim, live as you type .......... Space r  or  Ctrl-p
+│  ├─ at the prompt ...................... rg text                -i  -t py  -l  -C 3
+│  └─ word under the cursor, this file ... *   then n / N
+├─ a DIRECTORY you have visited .......... z part-of-name
+└─ a COMMAND you ran before .............. Ctrl-r                 fzf history
+```
+
+```
+Change many places…
+├─ every match, no review ................ :%s/old/new/g          add c to confirm each
+├─ every match, reviewing each ........... *  cgn new Esc  . . .  n n skips one
+├─ a column of consecutive lines ......... Space v  j j  I/A/c/d … Esc
+└─ scattered words at once ............... Ctrl-n Ctrl-n …  c … Esc Esc
+```
+
+```
+Understand code…
+├─ what is this? ......................... K                      hover docs
+├─ where is it defined? .................. Ctrl-]                 back: Ctrl-t
+├─ who uses it? .......................... grr                    quickfix list
+├─ what is in this file? ................. Space o                outline panel (gO = list)
+├─ what is wrong? ........................ ]d  /  [d              next / prev diagnostic
+└─ rename it / fix it .................... grn  /  gra
+```
+
+```
+Run things…
+├─ a quick command, without leaving nvim . Space t  (or F7)       floating terminal
+├─ a shell in a pane beside the code ..... :sp | term             Ctrl-\ Ctrl-n leaves it
+├─ several shells in one window .......... tmux  Ctrl-b %  /  Ctrl-b "
+└─ survive an SSH drop / closed terminal . tmux new -s work  →  tmux a -t work
+                                           (screen -S / -r where tmux is missing)
+```
+
+---
+
+## Neovim
+
+### Your keys — Space is the leader
+
+```
+Space ┬ e ...... file tree ........ NERDTree
+      ├ f ...... find file ........ fzf :Files
+      ├ r ...... search text ...... fzf :Rg         also Ctrl-p
+      ├ o ...... code outline ..... Aerial          also F6
+      ├ t ...... terminal ......... Floaterm        also F7 (works in insert + terminal mode)
+      ├ u ...... undo history ..... Undotree
+      ├ v ...... block select ..... = Ctrl-v, which Windows Terminal steals
+      └ j / k .. move line down/up  in visual mode: moves the selection
+```
+
+Pressing a panel key again closes the panel. In visual mode, `Tab` / `Shift-Tab`
+indent / dedent and keep the selection. A block edit (`Space v` … `I`) shows on
+one line only until you press `Esc`; then it is applied to every line.
+
+### Insert mode — completion and AI ghost text
+
+```
+Tab ──► grey AI text showing? ──yes──► accept it
+             │ no
+             ▼
+        menu open? ──────────yes──► select next item     Shift-Tab = previous
+             │ no                                         Enter     = confirm selected
+             ▼
+        insert a tab
+
+Ctrl-y  same chain, but confirms the first menu item
+Ctrl-e  same chain, but dismisses (AI text, then menu)
+Ctrl-l  open the completion menu by hand            (Ctrl-Space too, but unreliable)
+```
+
+AI suggestions come from a local OpenAI-compatible server. The default is
+`http://localhost:8000/v1`, and the first model it lists is used. You can override
+three settings: `MINUET_ENDPOINT` (URL), `MINUET_MODEL` (the model to use) and
+`MINUET_API_KEY`. Toggle suggestions with `:Minuet virtualtext toggle`.
+
+### Code — LSP: basedpyright + ruff (Python)
+
+| Key | Action | Key | Action |
+|---|---|---|---|
+| `K` | hover docs | `grn` | rename symbol |
+| `Ctrl-]` | go to definition | `gra` | code action |
+| `Ctrl-t` | jump back | `gri` | go to implementation |
+| `grr` | references → quickfix | `gO` | document symbols |
+| `]d` / `[d` | next / prev diagnostic | `Ctrl-s` (insert) | signature help |
+
+Saving a `*.py` file formats it with ruff. **Not `gd`:** in nvim 0.11 `gd` is the
+old buffer-local search; the LSP jump is `Ctrl-]`.
+
+### Vim essentials
+
+| Key | Action | Key | Action |
+|---|---|---|---|
+| `i` `a` / `I` `A` | insert before/after · line start/end | `o` / `O` | new line below / above |
+| `v` / `V` / `Space v` | visual char / line / block | `Esc` / `Ctrl-[` | back to normal |
+| `w` `b` `e` | word fwd / back / end | `0` `^` `$` | line start / first char / end |
+| `gg` / `G` | top / bottom | `{` / `}` | prev / next paragraph |
+| `Ctrl-u` / `Ctrl-d` | half page up / down | `%` | matching bracket |
+| `*` / `#` | search word fwd / back | `n` / `N` | next / prev match |
+| `x` / `dd` / `D` | delete char / line / to end | `yy` / `p` / `P` | yank line · paste after / before |
+| `u` / `Ctrl-r` | undo / redo | `.` | repeat last change |
+| `ci"` / `ca"` | change inside / around `"` | `r<c>` | replace one char |
+| `>>` / `<<` / `==` | indent / dedent / auto-indent | `gcc` / `gc{motion}` | toggle comment |
+| `:e file` / `:w` / `:q!` | open / save / quit without saving | `:bn` `:bp` `:bd` | next / prev / close buffer |
+
+### Panes, tabs and the built-in terminal
+
+`Ctrl-w` is two steps: press it, let go, then press the next key.
+
+| Key | Action | Key | Action |
+|---|---|---|---|
+| `:sp` / `:vsp` (`Ctrl-w s` / `v`) | split stacked / side by side | `:sp file` / `:vsp file` | split with another file |
+| `Ctrl-w h/j/k/l` | pane left / below / above / right | `Ctrl-w w` / `p` | next pane / last-used pane |
+| `Ctrl-w =` | equalize sizes | `Ctrl-w _` / `\|` | maximize height / width |
+| `10 Ctrl-w >` `<` `+` `-` | resize by 10 | `Ctrl-w q` / `o` | close pane / close all others |
+| `:tabnew` / `:tabe file` | new tab | `Ctrl-w T` | move pane to a new tab |
+| `gt` / `gT` / `3gt` | next / prev / tab 3 | `g<Tab>` | last-used tab |
+| `:tabclose` / `:tabonly` | close tab / all others | `:ls` · `:b name` | list buffers · switch by name |
+| `:sp \| term` / `:vsp \| term` | terminal in a new pane | `:tab term` | terminal in a new tab |
+| `Ctrl-\ Ctrl-n` | leave terminal mode (pane keys work again) | `i` | type in the shell again |
+| `:bd!` | close terminal and kill its shell | `exit` | same, from inside the shell |
+
+A tab is a layout of panes, not one file. To hop between open files, use
+buffers (`:ls`, `:b name`). Don't close a terminal with `:q`: the shell keeps
+running hidden and `:qa` later fails with *job still running*. A bare `:term`
+replaces the current pane; `:sp | term` keeps it.
+
+### Plugins at a glance
+
+| Plugin | Use it as |
 |---|---|
-| `i` / `a` | Insert before / after cursor |
-| `I` / `A` | Insert at start / end of line |
-| `o` / `O` | New line below / above |
-| `v` / `V` / `Ctrl-v` | Visual char / line / block (`Space v` for block if the terminal eats `Ctrl-v`) |
-| `:` | Command-line |
-| `Esc` / `Ctrl-[` | Back to Normal |
+| NERDTree | `Space e` toggle · `Enter` open · `s` / `i` open in split · `t` in tab · `go` preview · `u` up · `C` set root · `I` hidden files · `m` add/rename/delete · `?` help · `:NERDTreeFind` reveal current file |
+| vim-surround | `ysiw)` wrap word · `cs"'` change `"`→`'` · `ds"` delete `"` |
+| vim-visual-multi | `Ctrl-n` select word / add next · `q` skip · `Q` drop · `Esc` exit |
+| vim-fugitive | `:Git` · `:Git blame` · `:Gdiffsplit` · `:Git log` |
+| gitsigns | gutter marks automatically · `:Gitsigns blame_line` / `preview_hunk` / `reset_hunk` |
+| nvim-autopairs · vim-closetag | close brackets, quotes and HTML tags as you type |
 
-### Movement (Normal mode)
-| Key | Action |
+### Clipboard
+
+`clipboard=unnamedplus`: plain `y` / `p` / `dd` already use the OS clipboard.
+`"0p` pastes the last yank and skips deletes. Over SSH, yanks reach your laptop
+via OSC 52; to paste *into* remote nvim, use the terminal's paste (`Ctrl-Shift-V`).
+
+### Why no Alt / Ctrl-Space / Ctrl-v / Ctrl-s keys
+
+| Avoided | Breaks where |
 |---|---|
-| `h j k l` | Left / Down / Up / Right |
-| `w` / `b` / `e` | Next / prev word, end of word |
-| `0` / `^` / `$` | Line start / first non-blank / end |
-| `gg` / `G` | File top / bottom |
-| `{` / `}` | Prev / next paragraph |
-| `Ctrl-u` / `Ctrl-d` | Half page up / down |
-| `Ctrl-b` / `Ctrl-f` | Page up / down |
-| `%` | Jump to matching bracket |
-| `*` / `#` | Search word under cursor fwd / back |
-| `n` / `N` | Next / prev search match |
-
-### Edit
-| Key | Action |
-|---|---|
-| `x` / `X` | Delete char under / before cursor |
-| `dd` / `D` | Delete line / to end of line |
-| `yy` / `Y` | Yank line / to end |
-| `p` / `P` | Paste after / before |
-| `u` / `Ctrl-r` | Undo / redo |
-| `.` | Repeat last change |
-| `r<c>` | Replace single char with `<c>` |
-| `ci"` / `ca"` | Change inside / around `"` |
-| `>>` / `<<` | Indent / dedent line |
-| `==` | Auto-indent line |
-
-### Files, buffers, splits
-| Key | Action |
-|---|---|
-| `:e <file>` | Open file |
-| `:w` / `:q` / `:wq` / `:q!` | Save / quit / save+quit / force-quit |
-| `:bn` / `:bp` / `:bd` | Next / prev buffer; close buffer |
-| `:sp` / `:vsp` | Horizontal / vertical split |
-| `Ctrl-w h/j/k/l` | Move between splits |
-| `Ctrl-w =` | Equalize split sizes |
-
-### System clipboard
-
-This repo sets `clipboard=unnamedplus` in `init.lua`, so the **default register *is* the system clipboard** — plain `y` / `p` / `yy` / `dd` already round-trip to the OS clipboard. You only need explicit register prefixes for the cases below.
-
-| Key | Action |
-|---|---|
-| `y` / `p` / `yy` / `dd` | Default — uses system clipboard (`+` register) |
-| `"+y` / `"+p` | Explicit system clipboard yank / paste |
-| `"*y` / `"*p` | X11 primary selection on Linux; same as `+` on WSL/Windows |
-| `"0p` | Paste the last *yank* (skips deletes) |
-
-> **Gotcha 1 — `E353: Nothing in register 8`.** `*` and `+` are shifted keys (`Shift-8`, `Shift-=`). If Shift doesn't hold you end up reading `"8` (the numbered register, usually empty). Use plain `p`.
-
-> **Gotcha 2 — `^M` at end of every pasted line.** That means the paste bypassed `g:clipboard`. The usual cause is `Ctrl-Shift-V` (terminal paste) in **insert mode**, which sends raw bytes — so CRLF from a Windows source (VSCode, Notepad) survives. Fix: paste with `p` in normal mode or `Ctrl-R +` in insert mode — both use `win32yank -o --lf` which strips the CR. To clean an already-polluted file: `:%s/\r$//` (trailing CR) or `:%s/\r//g` (everywhere).
-
-> **Gotcha 3 — `clipboard: No provider` on a remote server.** This means nvim couldn't find a clipboard tool (no xclip / wl-copy / DISPLAY). On SSH sessions the included `init.lua` falls back to **OSC 52** (nvim ≥ 0.10), which pipes yanks back through the terminal to your *local* clipboard. After updating, just `yy` and the line should be on your laptop's clipboard. Paste *into* vim from outside still needs terminal paste (Ctrl-Shift-V) — OSC 52 read is almost never supported by terminals.
-
-### Custom mappings (this repo's `init.lua`)
-
-**Leader is `Space`.** Panel toggles and pickers live behind the leader so they
-don't shadow vim's built-in `Ctrl-` keys (`Ctrl-f` page forward, `Ctrl-l`
-clear search highlight + redraw, `Ctrl-x` decrement number, `Ctrl-t` pop tag
-stack, `Ctrl-g` file info — all still work).
-
-Everything below uses only `Space`+letter or plain `Ctrl`+letter, so the same
-keys behave identically on Windows PowerShell, WSL, and bare Linux — including
-over SSH, tmux and screen. See [Portability](#why-these-keys-portability) for
-what's deliberately avoided.
-
-| Key | Action |
-|---|---|
-| `Space e` | Toggle NERDTree file explorer |
-| `Space f` | `:Files` (fzf fuzzy file finder) |
-| `Space r` | `:Rg` (live ripgrep project search) |
-| `Space u` | Toggle Undotree (visual undo history) |
-| `Space t` | Toggle Floaterm floating terminal |
-| `Space o` | Toggle Aerial code outline (symbols from LSP/treesitter, no ctags) |
-| `Space v` | Blockwise-visual — same as `Ctrl-v`, which most terminals steal |
-| `Space j` / `Space k` | Move line (or visual selection) down / up — vim-move |
-| `Ctrl-p` | `:Rg` — second binding for the same thing (normal-mode `Ctrl-p` is just `k`) |
-| `F6` / `F7` | Aerial / Floaterm — F-key aliases; `F7` also works from insert and terminal mode |
-| `Tab` / `Shift-Tab` (visual) | Indent right / left (keeps selection; inserts a **hard tab** — `init.lua` has no `expandtab`). Visual mode only — in a snippet placeholder (Select mode) `Tab` still jumps to the next placeholder |
-| `Tab` (insert) | **Smart**: accept AI ghost text if visible → else next completion item → else literal tab |
-| `Shift-Tab` (insert) | Prev completion item (literal shift-tab otherwise) |
-| `Enter` (insert) | Confirm selected completion |
-| `Ctrl-y` (insert) | **Smart accept**: AI ghost text → else confirm completion → else literal key |
-| `Ctrl-e` (insert) | **Smart dismiss**: AI ghost text → else close completion popup → else literal key |
-| `Ctrl-l` (insert) | Manually trigger completion (`Ctrl-Space` also works, but is unreliable — see below) |
-
-### Why these keys (portability)
-
-The bindings avoid four whole categories of key that break in at least one of
-the three environments:
-
-| Avoided | Why |
-|---|---|
-| **`Alt` / `Meta`** | gnome-terminal on Ubuntu binds `Alt-f/e/v/s/t/h` to its menu bar — `Alt-e` (the old AI-dismiss key) opened the Edit menu instead. Over SSH and tmux, `Alt` is sent as an `ESC` prefix that races with a real `<Esc>`. |
-| **`Ctrl-Space`** | Sends a NUL byte that not every terminal forwards, and IBus on Ubuntu claims it as the input-method switcher. |
-| **`Ctrl-v` / `Ctrl-c`** | Windows Terminal binds both (`Terminal.PasteFromClipboard` / `CopyToClipboard`), so they never reach nvim. `Ctrl-c` at least falls through when nothing is selected; `Ctrl-v` never does — hence `Space v`. |
-| **`Ctrl-s` / `Ctrl-q`** | Terminal flow control (XON/XOFF). Harmless *inside* nvim, which puts the tty in raw mode, but it freezes the shell on WSL/Linux. `.zshrc` now runs `stty -ixon` to disable it. |
-
-To use the real `Ctrl-v` for blockwise-visual instead of `Space v`, delete the
-`ctrl+v` entry from Windows Terminal's `settings.json` keybindings and paste
-with `Ctrl-Shift-V`.
-
-### Editing many lines at once
-
-Three ways, easiest first.
-
-**1. `cgn` + `.` — the one to learn.** No plugin, no special keys, works over SSH
-and in any terminal. Put the cursor on the word, then:
-
-| Key | Action |
-|---|---|
-| `*` | Search for the word under the cursor (also lands you on the next one) |
-| `cgn` | **c**hange the next match — type the replacement, then `Esc` |
-| `.` | Repeat on the next match |
-| `n` `n` | Skip a match — **two** presses, see below |
-
-So `*` `cgn` `newname` `Esc` then `.` `.` `.` renames one occurrence per `.`.
-This beats multi-cursor for most renames: you review each change as you make
-it, and there's nothing to exit.
-
-> **Skipping takes two `n`s, not one.** `.` changes the match at *or after* the
-> cursor. A single `n` moves the cursor onto the next match — which is the same
-> one `.` was already going to change, so `n` `.` and a bare `.` do exactly the
-> same thing. To leave a match alone, press `n` twice: once to land on it, once
-> to move past it, then `.`.
-
-If you don't need to skip any, just use `:%s/old/new/g` — add the `c` flag
-(`:%s/old/new/gc`) to confirm each one interactively.
-
-**2. `Space v` — visual block**, for rectangular edits on consecutive lines.
-Extend with `j`/`k`, then `I` (insert before), `A` (append after), `c`, `d`, or
-`r<c>`. **The edit only replicates to the other lines when you press `Esc`** —
-until then you'll see it on one line only, which is normal.
-
-- Comment 5 lines: `Space v` `jjjj` `I` `# ` `Esc`
-- Append `,` to ragged lines: `Space v` `jjjj` `$` `A` `,` `Esc` (the `$` is what
-  handles lines of different lengths)
-
-**3. `Ctrl-n` — multi-cursor** (vim-visual-multi), for scattered occurrences.
-`Ctrl-n` selects the word and again adds the next; `q` skips one, `Q` drops a
-cursor, `Tab` switches selections ↔ bare cursors, `Esc` exits. Then edit
-normally and it applies at every cursor. Requires `:PlugInstall`.
-
-> **Gotcha — `Ctrl-v` pastes instead of entering block mode.** Windows Terminal
-> binds `ctrl+v` to `Terminal.PasteFromClipboard`, so the key never reaches
-> nvim; VS Code's integrated terminal does the same. That's why `Space v` exists
-> — it always gets through. To free the real `Ctrl-v` instead, delete the
-> `ctrl+v` entry from Windows Terminal's `settings.json` keybindings and paste
-> with `Ctrl-Shift-V`.
+| `Alt-*` | gnome-terminal menus eat `Alt-f/e/v/…`; over SSH and tmux it races with `Esc` |
+| `Ctrl-Space` | sends a NUL byte; IBus on Ubuntu grabs it |
+| `Ctrl-v` / `Ctrl-c` | Windows Terminal and VS Code bind them to paste / copy |
+| `Ctrl-s` / `Ctrl-q` | terminal flow control (`.zshrc` runs `stty -ixon`) |
 
 ### Where the config lives
 
-| OS | nvim reads | `setup` installs to |
+The config is one file: [`.config/nvim/init.lua`](.config/nvim/init.lua) (vim-plug).
+On Linux and WSL a stow symlink points to it. On Windows,
+`%LOCALAPPDATA%\nvim\init.lua` is a one-line stub that `dofile`s it. Check
+which file nvim actually loads with `:echo $MYVIMRC`.
+
+---
+
+## Keys not working?
+
+A key can fail at two layers: the terminal never hands it to nvim, or nvim
+receives it but the config or a plugin doesn't respond. Test them in this order,
+from the repo directory:
+
+```
+a key does nothing
+      │
+      ▼
+nvim -l tests/nvim_keymaps.lua            ← automated: ~60 tests, real nvim, your config (~1 min)
+      │                                      nvim -l tests/nvim_keymaps.lua lsp   runs one group
+      ├── FAIL ─► config / plugin / missing tool. The → line under the FAIL says what to run.
+      │
+      └── PASS ─► nvim is fine. The terminal is eating the key:
+                  nvim --clean -S tests/nvim_keycheck.lua     ← press each key, see what arrives
+                        │
+                        └── FAIL ─► apply its hint, or use the Space-key alternative
+```
+
+Each automated test starts a fresh nvim with your real config. It types the
+keys exactly as if pressed and checks the result: did the panel open, did the
+line move, did the cursor land on the definition? Groups: environment ·
+Space panels · editing · completion · LSP · AI.
+
+Inside nvim: `:verbose nmap <Space>e` shows what a key does and which file defined
+it · `:messages` · `:checkhealth` · `:checkhealth vim.lsp` · `:PlugStatus`.
+
+| Symptom | Cause | Fix |
 |---|---|---|
-| Linux / WSL / macOS | `~/.config/nvim/init.lua` | stow symlink from this repo |
-| Windows (native) | `%LOCALAPPDATA%\nvim\init.lua` | one-line stub that `dofile`s the repo file (written by `setup_powershell_omp.ps1`) |
-
-The config is a single `init.lua` (plugins still managed by vim-plug). Edit the
-repo file; both machines pick it up on the next nvim start.
-
-> **Gotcha — edits to the repo don't show up on Windows.** Native Windows nvim
-> ignores `~/.config/nvim` unless `XDG_CONFIG_HOME` is set. Check with
-> `:echo $MYVIMRC`. If an old `init.vim` sits next to `init.lua` nvim errors with
-> E5422 — both setup scripts move it aside to `init.vim.bak-<timestamp>`.
-
-### LSP — Python via basedpyright + ruff (nvim 0.11 built-in keymaps)
-
-basedpyright provides completions/types/auto-imports; ruff lints and **formats on save** (`*.py`).
-| Key | Action |
-|---|---|
-| `K` | Hover docs |
-| `Ctrl-]` | Go to definition (via `tagfunc`; `Ctrl-t` jumps back) |
-| `grr` | List references |
-| `grn` | Rename symbol |
-| `gra` | Code action |
-| `gri` | Go to implementation |
-| `gO` | Document symbols |
-| `[d` / `]d` | Prev / next diagnostic |
-| `Ctrl-s` (insert) | Signature help |
-
-> **Not `gd`.** nvim 0.11 does *not* map `gd` to the LSP — plain `gd` is the old
-> built-in "search for the local declaration", which only looks at the current
-> buffer and is wrong as often as it's right. The LSP-backed jump is `Ctrl-]`
-> (nvim points `tagfunc` at the language server), and `Ctrl-t` pops back.
-
-### AI completion (minuet-ai, local LLM)
-
-Copilot-style grey **ghost-text** suggestions, generated by a local
-OpenAI-compatible server (default `http://localhost:8000/v1`; set
-`MINUET_ENDPOINT` to point elsewhere). On startup nvim auto-discovers the served
-model from `GET /v1/models` — swap models on the server and nvim follows. If the
-server is unreachable, AI completion silently stays off (no errors).
-
-| Key / command | Action |
-|---|---|
-| `Tab` | Accept the visible suggestion (Copilot-style; falls through to completion menu / literal tab when no ghost text) |
-| `Ctrl-y` | Accept the visible suggestion (falls through to confirming a normal completion) |
-| `Ctrl-e` | Dismiss the visible suggestion (falls through to closing the completion popup) |
-| `:Minuet virtualtext toggle` | Turn auto-suggestions on / off (prints new state) |
-| `:Minuet virtualtext enable` / `disable` | Explicit on / off |
-
-Notes:
-- The toggle is per-session — every nvim restart begins **enabled**.
-- Env overrides (set before launching nvim): `MINUET_ENDPOINT` (base URL),
-  `MINUET_MODEL` (skip auto-discovery), `MINUET_API_KEY` (bearer; default `dummy`,
-  fine for vLLM).
-
-### Plugin shortcuts in `init.lua`
-- **vim-surround** — `ysiw)` wrap word in `()`, `cs"'` change `"` → `'`, `ds"` delete surrounding `"`.
-- **Commenting (built into nvim 0.10+)** — `gcc` toggle line comment, `gc<motion>` toggle range (e.g. `gcap` for paragraph, `gc` in visual mode).
-- **vim-visual-multi** — `Ctrl-n` on a word selects it; keep pressing to add the next occurrence (multiple cursors). `q` skips one, `Q` removes a cursor, `Esc` exits. (`Ctrl-n` is exclusively multi-cursor's — NERDTree moved to `Space e`.)
-- **vim-move** — `Space j` / `Space k` move current line or visual selection down / up (Visual mode only, so typing a space over a snippet placeholder isn't swallowed). (Its `Alt-j`/`Alt-k` defaults are disabled via `g:move_map_keys = 0`; `Alt` is unreliable over SSH and tmux.)
-- **vim-fugitive** — `:Git` status, `:Git blame`, `:Gdiffsplit`, `:Git log`.
-- **gitsigns.nvim** — change markers in the gutter automatically; on demand: `:Gitsigns blame_line`, `:Gitsigns preview_hunk`, `:Gitsigns reset_hunk`. No keymaps by design.
-- **nvim-autopairs** — auto-closes `()[]{}`""''` as you type; accepting a function completion inserts `()` with the cursor inside.
-- **minuet-ai** — AI ghost-text suggestions; see the "AI completion" section above.
-- **vim-closetag** — auto-closes HTML/XML tags as you type; no keys to learn.
+| `Ctrl-v` pastes | Windows Terminal / VS Code bind it | `Space v`, or delete `ctrl+v` from Windows Terminal `settings.json` |
+| `F6` / `F7` do nothing | tmux/screen terminfo mangles F-keys | `Space o` / `Space t`; tmux: `set -g default-terminal tmux-256color` |
+| `Ctrl-p` / `Ctrl-n` / `Ctrl-e` trigger VS Code | VS Code terminal grabs them | `"terminal.integrated.sendKeybindingsToShell": true` |
+| `*` types `8`, `%` types `5` | VS Code WSL terminal | see README → Troubleshooting |
+| `Space f` / `Space r`: *Failed to run "fzf --version"* | Windows nvim started from Git Bash got bash as `shell` | fixed in `init.lua` (pins `cmd.exe`); pull the repo |
+| `Tab` never accepts AI text | no ghost text appears: the model is a reasoning or tiny model | `export MINUET_MODEL=<id from /v1/models>` |
+| only ruff errors, no type errors | basedpyright + nvim 0.11 on a file outside any project | open it inside a project (`.git` / `pyproject.toml`), or `pixi global update nvim` (0.12) |
+| `Ctrl-]` → *E426 tag not found* | LSP not attached / still analysing | wait a second; `:checkhealth vim.lsp` |
+| `^M` at every pasted line end | `Ctrl-Shift-V` in insert mode keeps CRLF | paste with `p` or `Ctrl-R +`; clean up with `:%s/\r$//` |
+| *E353: Nothing in register 8* | Shift didn't register on `"*` | just use `p` |
+| *clipboard: No provider* | no xclip / wl-copy / win32yank | WSL: `win32yank.exe` on PATH · X11: `xclip` · SSH: OSC 52 (nvim ≥ 0.10) |
 
 ---
 
-## Tmux  (prefix: `Ctrl-b`)
+## Search from the shell
 
-### Sessions (outside tmux)
+```
+plocate ── NAMES, all of ~, instant (pre-built index) ── "where is that file?"
+rg ─────── CONTENT, one tree, live ────────────────────── "which file says X?"
+fzf ────── pick interactively from either list ────────── rg --files | fzf
+```
+
+### plocate — file names, instantly
+
 | Command | Action |
 |---|---|
-| `tmux new -s NAME` | New named session |
-| `tmux ls` | List sessions |
-| `tmux a -t NAME` | Attach |
-| `tmux kill-session -t NAME` | Kill |
+| `plocate name` | every indexed path containing `name` |
+| `plocate -i name` / `-b name` | case-insensitive / match the file name only |
+| `plocate -r '\.ya?ml$'` | regex |
+| `plocate -c name` | count only |
+| `plocate_update` | rebuild the index now (`.zshrc` does it daily in the background) |
 
-### Inside tmux (after pressing `Ctrl-b`)
-| Key | Action |
-|---|---|
-| `d` | Detach |
-| `s` | Switch session (list) |
-| `$` | Rename session |
-| `c` | New window |
-| `,` | Rename window |
-| `n` / `p` | Next / prev window |
-| `0`–`9` | Jump to window by number |
-| `w` | List windows |
-| `&` | Kill window |
-| `%` | Split pane left/right |
-| `"` | Split pane top/bottom |
-| `o` | Cycle to next pane |
-| `←↑↓→` | Move to pane in direction |
-| `z` | Toggle pane zoom |
-| `x` | Kill pane |
-| `{` / `}` | Swap panes |
-| `Space` | Cycle layouts |
-| `[` | Enter copy mode (vi keys, `Space` to select, `Enter` to copy) |
-| `]` | Paste |
+`setup.sh` builds plocate into `~/.local/bin` (Linux and WSL only, no sudo). It
+indexes `$HOME`, minus `.git`, `node_modules`, `__pycache__` and `~/.cache`.
+On WSL, the Windows drive under `/mnt/c` is **not** indexed; use `rg --files`
+there instead.
+
+### ripgrep (`rg`) — file contents
+
+| Command | Action | Command | Action |
+|---|---|---|---|
+| `rg pat` | recursive search | `rg -i pat` | case-insensitive |
+| `rg -t py pat` | only one file type | `rg -l pat` | file names only |
+| `rg -C 3 pat` | 3 lines of context | `rg --hidden pat` | include hidden files |
+| `rg --files \| rg name` | file names in this project (respects `.gitignore`) | `rg -w pat` | whole words |
 
 ---
 
-## GNU screen  (prefix: `Ctrl-a`)
+## Shell: zsh + fzf
 
-### Sessions (outside screen)
-| Command | Action |
-|---|---|
-| `screen -S NAME` | New named session |
-| `screen -ls` | List sessions |
-| `screen -r NAME` | Reattach |
-| `screen -dr NAME` | Detach others + reattach |
+Plugins: `git` · `zsh-autosuggestions` · `z` · `colored-man-pages` · `fzf` · `zsh-syntax-highlighting`.
 
-### Inside screen (after pressing `Ctrl-a`)
-| Key | Action |
-|---|---|
-| `c` | New window |
-| `n` / `p` | Next / prev window |
-| `0`–`9` | Jump to window by number |
-| `A` | Rename window |
-| `"` | List windows |
-| `k` | Kill window |
-| `d` | Detach |
-| `S` / `\|` | Split horizontally / vertically |
-| `Tab` | Cycle regions |
-| `X` | Remove region |
-| `Esc` | Enter copy mode (`Space` to select, `Enter` to copy) |
-| `]` | Paste |
+| Key / command | Action | Key / command | Action |
+|---|---|---|---|
+| `→` / `End` | accept autosuggestion | `Ctrl-→` | accept next word |
+| `Ctrl-r` | fuzzy history | `Ctrl-t` | fuzzy-pick file, paste path |
+| `Alt-c` | fuzzy-pick dir and `cd` | `cd **<Tab>` | fuzzy completion |
+| `z foo` / `z foo bar` | jump to frecent dir | `z -l foo` | list candidates |
+
+| Alias | Expands to | Alias | Expands to |
+|---|---|---|---|
+| `gst` | `git status` | `gd` / `gds` | `git diff` / `--staged` |
+| `ga` / `gaa` | `git add` / `--all` | `gc` / `gca` | `git commit -v` / `-av` |
+| `gp` / `gl` | `git push` / `pull` | `gco` / `gb` | `git checkout` / `branch` |
+| `glog` | one-line graph log | `grb` / `grbi` | `git rebase` / `-i` |
+
+Full list: `alias | grep '^g'`.
 
 ---
 
-## fzf (terminal)
+## tmux / screen
 
-Enabled via the oh-my-zsh `fzf` plugin.
+Press the prefix first: tmux `Ctrl-b`, screen `Ctrl-a`.
 
-| Key | Action |
-|---|---|
-| `Ctrl-t` | Fuzzy-pick files, paste paths into command line |
-| `Ctrl-r` | Fuzzy reverse history search |
-| `Alt-c` | Fuzzy-pick directory and `cd` into it |
-| `**<Tab>` | Fuzzy completion (e.g. `cd **<Tab>`) |
-
----
-
-## Zsh / oh-my-zsh
-
-Active plugins (set in `.zshrc`): `git`, `zsh-autosuggestions`, `z`, `colored-man-pages`, `fzf`, `zsh-syntax-highlighting`.
-
-### Autosuggestions
-| Key | Action |
-|---|---|
-| `→` or `End` | Accept full suggestion |
-| `Ctrl-→` | Accept next word of suggestion |
-| `↑` | Match-prefix history search |
-| `Ctrl-r` | Fuzzy history search (via fzf) |
-
-### `z` (frecency directory jump)
-| Command | Action |
-|---|---|
-| `z foo` | Jump to most-used dir matching `foo` |
-| `z foo bar` | Match both `foo` and `bar` |
-| `z -l foo` | List candidates without jumping |
-
-### Common git plugin aliases
-| Alias | Expands to |
-|---|---|
-| `gst` | `git status` |
-| `ga` / `gaa` | `git add` / `git add --all` |
-| `gc` / `gca` | `git commit -v` / `git commit -av` |
-| `gp` / `gl` | `git push` / `git pull` |
-| `gco` / `gb` | `git checkout` / `git branch` |
-| `gd` / `gds` | `git diff` / `git diff --staged` |
-| `glog` | `git log --oneline --decorate --graph` |
-| `grb` / `grbi` | `git rebase` / `git rebase -i` |
-
-Run `alias | grep '^g'` for the full list.
+| Action | tmux | screen |
+|---|---|---|
+| new named session | `tmux new -s NAME` | `screen -S NAME` |
+| list / attach | `tmux ls` / `tmux a -t NAME` | `screen -ls` / `screen -r NAME` |
+| detach | `d` | `d` |
+| new window / rename | `c` / `,` | `c` / `A` |
+| next / prev / jump | `n` / `p` / `0-9` | `n` / `p` / `0-9` |
+| list windows | `w` | `"` |
+| kill window | `&` | `k` |
+| split side-by-side / stacked | `%` / `"` | `\|` / `S` |
+| move between panes | arrows · `o` cycles | `Tab` cycles |
+| zoom pane / kill pane | `z` / `x` | — / `X` |
+| copy mode / paste | `[` (vi keys, `Space`, `Enter`) / `]` | `Esc` / `]` |
 
 ---
 
-## CLI utilities
+## Small tools
 
-### ripgrep (`rg`)
-| Command | Action |
-|---|---|
-| `rg pattern` | Recursive search |
-| `rg -i pattern` | Case-insensitive |
-| `rg -t py pattern` | Restrict to file type (e.g. `py`, `rust`, `md`) |
-| `rg -l pattern` | List matching filenames only |
-| `rg --hidden pattern` | Include hidden files |
-| `rg -C 3 pattern` | 3 lines of context |
+| Command | Action | Command | Action |
+|---|---|---|---|
+| `eza -la` | long listing with hidden files | `eza --git -l` | with git status per file |
+| `eza --tree -L 2` | tree, two levels | `tree -L 2 -a` | tree incl. hidden |
+| `diskus` | fast directory size (`du -sh`) | `jq . file.json` | pretty-print JSON |
 
-### eza (modern `ls`)
-| Command | Action |
-|---|---|
-| `eza` | Plain listing |
-| `eza -l` | Long format |
-| `eza -la` | Long + hidden |
-| `eza --tree -L 2` | Tree view, 2 levels |
-| `eza --git -l` | Show git status next to each file |
-
-### tree / diskus
-| Command | Action |
-|---|---|
-| `tree -L 2` | Show 2 levels |
-| `tree -a` | Include hidden |
-| `diskus` | Fast directory size (replaces `du -sh`) |
-
----
-
-## Quick reminders
-
-- `cmd1 \| cmd2` — pipe stdout of `cmd1` into `cmd2`.
-- `cmd > file` / `cmd >> file` — redirect (overwrite / append).
-- `cmd 2>&1` — merge stderr into stdout.
-- `Ctrl-z` / `fg` / `bg` — suspend / resume foreground or background.
-- `Ctrl-r` (in zsh, with fzf) — fuzzy history search.
-- `!!` — repeat last command (`sudo !!` re-runs it with sudo).
+Reminders: `cmd 2>&1 | less` merges stderr · `Ctrl-z` / `fg` / `bg` suspend and resume ·
+`sudo !!` re-runs the last command with sudo.

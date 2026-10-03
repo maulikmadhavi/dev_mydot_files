@@ -1,6 +1,6 @@
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
-export PATH="$HOME/.pixi/bin:$PATH"
+export PATH="$HOME/.pixi/bin:$HOME/.local/bin:$PATH"   # ~/.local/bin: plocate built by setup.sh
 
 # Path to your Oh My Zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
@@ -89,6 +89,14 @@ alias vim=nvim
 
 # Personal shell utility functions (compare_directories, custom_rsync, ...)
 [ -f ~/utils.sh ] && source ~/utils.sh
+
+# plocate's per-user index has no root cron job to refresh it, so rebuild it in
+# the background once it is a day old ((Nm-1) = modified within the last day).
+_plocate_fresh=(~/.cache/plocate/plocate.db(Nm-1))
+if [[ -x ~/.local/bin/updatedb && ${#_plocate_fresh} -eq 0 ]]; then
+    (plocate_update >/dev/null 2>&1 &)
+fi
+unset _plocate_fresh
 
 # Machine-local secrets/overrides (MINUET_ENDPOINT, ...) — never committed
 [ -f ~/.zshrc.local ] && source ~/.zshrc.local

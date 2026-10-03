@@ -52,7 +52,8 @@ if (Get-Command pixi -ErrorAction SilentlyContinue) {
 }
 # Package list kept in parity with setup.sh. Differences: tmux->psmux and
 # git/nvim via winget below; zsh/stow/xclip are Linux-only; xxhash/b3sum are
-# skipped because utils.sh (their only consumer) is bash-only.
+# skipped because utils.sh (their only consumer) is bash-only; plocate
+# (source-built by setup.sh) is Linux-only too.
 pixi global install yarn basedpyright ruff fzf diskus tree ripgrep eza gcc gxx make cmake jq
 
 # === Tooling installs

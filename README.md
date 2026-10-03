@@ -52,6 +52,7 @@ The script prints a redrawn checklist at every step so you can see what's done, 
   [ ] Stow dotfiles into $HOME
   [ ] Install zsh plugins
   [ ] Install nvim plugins
+  [ ] Install plocate + index $HOME
   [ ] Set zsh as default shell
 ════════════════════════════════════════════════════════════════
 ```
@@ -90,7 +91,8 @@ After install, configure your terminal (Windows Terminal, etc.) to use **FiraCod
 ## What each installer does
 
 ### `setup.sh` (Linux)
-- Installs [`pixi`](https://pixi.sh), then via pixi: `tmux`, `nvim`, `zsh`, `fzf`, `stow`, `python-lsp-server`, `tree`, `diskus`, `xclip`, `yarn`, `git`.
+- Installs [`pixi`](https://pixi.sh), then via pixi: `tmux`, `nvim`, `zsh`, `fzf`, `ripgrep`, `eza`, `stow`, `basedpyright`, `ruff`, `tree`, `diskus`, `xclip`, `jq`, `yarn`, `git`, `gcc`/`gxx`/`make`/`cmake`.
+- Builds [`plocate`](https://plocate.sesse.net) from source into `~/.local/bin` (not on conda-forge, and apt would need sudo) and indexes `$HOME`; `.zshrc` refreshes the index daily.
 - Installs `nvm` + Node LTS.
 - Installs `vim-plug` and runs `:PlugInstall` for the plugins in `.config/nvim/init.lua`.
 - Initializes the `oh-my-zsh` submodule and symlinks it to `~/.oh-my-zsh`.
@@ -99,7 +101,7 @@ After install, configure your terminal (Windows Terminal, etc.) to use **FiraCod
 - Attempts to switch your default login shell to `zsh` via `chsh` (best-effort — falls back to `.bashrc`'s `exec zsh -l` if `chsh` is blocked).
 
 ### `setup_powershell_omp.ps1` (Windows)
-- Installs `pixi`, then via pixi: `yarn`, `python-lsp-server`, `fzf`, `diskus`, `ripgrep`, `eza`, `gcc`, `gxx`, `make`, `cmake`.
+- Installs `pixi`, then via pixi: `yarn`, `basedpyright`, `ruff`, `fzf`, `diskus`, `tree`, `ripgrep`, `eza`, `jq`, `gcc`, `gxx`, `make`, `cmake`. (plocate is Linux-only.)
 - Installs `git`, `oh-my-posh`, `PSReadLine`, FiraCode Nerd Font, Neovim, `psmux` (tmux for Windows).
 - Installs `vim-plug` and writes a one-line `%LOCALAPPDATA%\nvim\init.lua` stub that loads the repo's `.config/nvim/init.lua`, so Windows and WSL share one config.
 - Writes `$PROFILE` with: oh-my-posh init (custom `zash.omp.json` theme), PSReadLine predictive autocomplete, and Linux-style aliases (`ls`, `cat`, `grep`, …). Idempotent — safe to re-run without duplicating lines.
@@ -119,6 +121,7 @@ After install, configure your terminal (Windows Terminal, etc.) to use **FiraCod
 - **`chsh: ... is not in /etc/shells` or PAM error** — non-fatal. The stowed `.bashrc` already does `exec zsh -l` on interactive shells, so new terminals will still launch zsh without needing the login shell changed.
 - **`pixi: command not found` after install** — open a new shell, or `export PATH="$HOME/.pixi/bin:$PATH"`.
 - **nvim plugins missing** — open nvim and run `:PlugInstall` manually.
+- **An nvim key does nothing** — run `nvim -l tests/nvim_keymaps.lua` from the repo: it drives every documented keybinding in a real nvim and prints a fix for each failure. If those pass, `nvim --clean -S tests/nvim_keycheck.lua` shows which keys your terminal never delivers. See [cheatsheet → Keys not working?](cheatsheet.md#keys-not-working).
 - **PowerShell `cannot be loaded because running scripts is disabled`** — `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once.
 - **`Shift-<digit>` produces just the digit in vim (e.g. `%` → `5`, `*` → `8`) — only in VSCode's integrated terminal under WSL.** Notepad, Windows Terminal, and plain `wsl.exe` all work; only VSCode's WSL-Remote terminal rewrites the key. Try one of:
   1. Open VSCode → `Ctrl-K Ctrl-S` (Keyboard Shortcuts), search `shift+5` — if anything is bound (often by a Vim/vscodevim extension), remove it or restrict its `when` clause to exclude `terminalFocus`.

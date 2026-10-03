@@ -339,6 +339,20 @@ compare_fast_directories() {
 }
 
 # -----------------------------------------------------------------------------
+# plocate_update [extra updatedb args...]
+#   Rebuild the per-user plocate index of $HOME (~/.cache/plocate/plocate.db).
+#   setup.sh builds plocate into ~/.local/bin with that path compiled in, so
+#   plain `plocate foo` reads it; no root or cron job is involved. .zshrc runs
+#   this in the background whenever the index is more than a day old.
+#   VCS dirs, node_modules, __pycache__ and ~/.cache are left out.
+# -----------------------------------------------------------------------------
+plocate_update() {
+    mkdir -p ~/.cache/plocate
+    ~/.local/bin/updatedb -U "$HOME" \
+        --prunenames ".git .hg .svn node_modules __pycache__ .cache" "$@"
+}
+
+# -----------------------------------------------------------------------------
 # When executed directly (not sourced), act as a dispatcher:
 #   ./utils.sh compare_directories ~/a ~/b
 # Sourcing the file (from .zshrc/.bashrc) only defines the functions above.
@@ -353,6 +367,7 @@ if [[ -n "${BASH_VERSION:-}" && "${BASH_SOURCE[0]}" == "${0}" ]]; then
         echo "  fast_rsync <source> <target> [extra rsync args... e.g. --delete]"
         echo "  fixspaces <dir>"
         echo "  fixspaces_preview <dir>"
+        echo "  plocate_update [extra updatedb args...]"
         exit 2
     fi
     "$@"

@@ -18,6 +18,15 @@ opt.cursorline     = true               -- highlight the current line
 opt.undofile       = true               -- persistent undo (pairs with <leader>u Undotree)
 vim.cmd('syntax on')
 
+-- Windows nvim takes 'shell' from $SHELL, which Git Bash and VS Code's bash
+-- terminal set to a quoted bash.exe path — while every other shell option
+-- keeps cmd.exe's values. system() and :! then failed, and with them fzf.vim
+-- (<leader>f / <leader>r / Ctrl-p) and airline's git status. Pin cmd.exe,
+-- the shell those plugins are written against on Windows.
+if vim.fn.has('win32') == 1 and vim.o.shell:find('bash') then
+  opt.shell = 'cmd.exe'
+end
+
 -- ============================================================
 -- Clipboard providers
 -- ============================================================

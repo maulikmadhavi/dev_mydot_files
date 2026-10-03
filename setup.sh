@@ -22,6 +22,7 @@ STEPS=(
   "Stow dotfiles into \$HOME"
   "Install zsh plugins"
   "Install nvim plugins"
+  "Install plocate + index \$HOME"
   "Set zsh as default shell"
 )
 CURRENT_STEP=-1
@@ -220,7 +221,37 @@ if [ -z "$(ls -A ~/.config/nvim/plugged 2>/dev/null)" ]; then
     fail_step
 fi
 
-# === 9. Switch default shell to zsh (best-effort; needs no sudo)
+# === 9. plocate (instant filename search)
+
+step
+# plocate is not on conda-forge and apt needs sudo, so build it from source
+# into ~/.local/bin with a throwaway pixi toolchain. zstd and libstdc++ are
+# linked statically: the binaries then need only glibc and keep working after
+# pixi garbage-collects that toolchain. The index path is compiled in
+# (~/.cache/plocate/plocate.db), so plain `plocate foo` needs no root, cron
+# or /etc/updatedb.conf; plocate_update (utils.sh) refreshes it.
+PLOCATE_VERSION=1.1.25
+if command -v plocate >/dev/null 2>&1 || [ -x "$HOME/.local/bin/plocate" ]; then
+    echo "plocate already installed — skipping the build."
+else
+    PLOCATE_SRC="$(mktemp -d)"
+    if curl -fsSL "https://plocate.sesse.net/download/plocate-$PLOCATE_VERSION.tar.gz" | tar xz -C "$PLOCATE_SRC" \
+        && (cd "$PLOCATE_SRC" && pixi exec -s meson -s ninja -s cxx-compiler -s pkg-config -s zstd -s zstd-static -- \
+            bash -c 'LDFLAGS="$LDFLAGS -static-libstdc++ -static-libgcc" meson setup build -Dprefer_static=true \
+                         -Dinstall_systemd=false -Dlocategroup="$(id -gn)" \
+                         -Ddbpath="$HOME/.cache/plocate/plocate.db" \
+                     && ninja -C build plocate updatedb') \
+        && mkdir -p "$HOME/.local/bin" \
+        && install -m 755 "$PLOCATE_SRC/build/plocate" "$PLOCATE_SRC/build/updatedb" "$HOME/.local/bin/"; then
+        echo "Indexing \$HOME for plocate (the first run can take a minute)..."
+        bash "$REPO_DIR/utils.sh" plocate_update || fail_step
+    else
+        fail_step
+    fi
+    rm -rf "$PLOCATE_SRC"
+fi
+
+# === 10. Switch default shell to zsh (best-effort; needs no sudo)
 
 step
 # chsh can fail when zsh isn't in /etc/shells (common when zsh comes from pixi)
