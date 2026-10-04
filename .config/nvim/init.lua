@@ -97,6 +97,10 @@ vim.g.move_map_keys = 0
 vim.g.NERDTreeDirArrowExpandable  = '+'
 vim.g.NERDTreeDirArrowCollapsible = '~'
 
+-- Open files as tabs along the top, like VS Code's editor tabs.
+vim.g['airline#extensions#tabline#enabled']   = 1
+vim.g['airline#extensions#tabline#formatter'] = 'unique_tail'   -- file name, not path
+
 map('n', '<leader>e', ':NERDTreeToggle<CR>')
 map('n', '<leader>f', ':Files<CR>')
 map('n', '<leader>r', ':Rg<CR>')
@@ -113,6 +117,30 @@ map('n', '<leader>o', ':AerialToggle<CR>')
 -- synonym for `k`, so it shadows nothing worth keeping. (Ctrl-r is
 -- deliberately left alone: it is vim's redo.)
 map('n', '<C-p>', ':Rg<CR>')
+
+-- File tabs: H / L cycle them (VS Code Ctrl+PageUp/PageDown; vim's own H/L
+-- only jump to the top/bottom of the screen) and <leader>x closes one but
+-- keeps its pane — plain :bd closes the pane as well. Pressed in a side
+-- panel (NERDTree, Aerial) they act on the last file pane instead of loading
+-- a file into the panel.
+local function in_file_pane(fn)
+  return function()
+    if not vim.bo.buflisted then vim.cmd.wincmd('p') end
+    fn()
+  end
+end
+map('n', 'H', in_file_pane(vim.cmd.bprevious))
+map('n', 'L', in_file_pane(vim.cmd.bnext))
+map('n', '<leader>x', in_file_pane(function()
+  local buf = vim.api.nvim_get_current_buf()
+  if vim.bo[buf].modified then
+    return vim.notify('Unsaved changes: :w first, or :bd! to discard them', vim.log.levels.WARN)
+  end
+  vim.cmd.bprevious()
+  if vim.api.nvim_get_current_buf() == buf then vim.cmd.enew() end
+  -- ! only matters for a :term tab: its shell is stopped, as in VS Code.
+  vim.cmd.bdelete({ args = { tostring(buf) }, bang = true })
+end))
 
 -- NERDTree used to own Ctrl-n as well, but vim-visual-multi defaults to
 -- Ctrl-n and its plugin file is sourced at plug#end() — i.e. after this

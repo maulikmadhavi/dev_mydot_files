@@ -1,10 +1,11 @@
 # Cheatsheet
 
 Quick reference for the tools this repo configures. Start with the decision
-trees, then look up details below. Something not working? Jump to
+trees, then look up details below. Coming from VS Code? Start with
+[the shortcut translation](#coming-from-vs-code). Something not working? Jump to
 [Keys not working?](#keys-not-working).
 
-[Which tool when](#which-tool-when) · [Neovim](#neovim) · [Keys not working?](#keys-not-working) · [Search from the shell](#search-from-the-shell) · [Shell](#shell-zsh--fzf) · [tmux / screen](#tmux--screen) · [Small tools](#small-tools)
+[Which tool when](#which-tool-when) · [From VS Code](#coming-from-vs-code) · [Neovim](#neovim) · [Keys not working?](#keys-not-working) · [Search from the shell](#search-from-the-shell) · [Shell](#shell-zsh--fzf) · [tmux / screen](#tmux--screen) · [Small tools](#small-tools)
 
 ---
 
@@ -53,6 +54,41 @@ Run things…
 
 ---
 
+## Coming from VS Code
+
+Start in the project folder with plain `nvim`; `nvim .` opens the file tree
+full-screen instead of as a sidebar. Press `i` to type and `Esc` when done.
+Every key below is pressed after `Esc` (normal mode), and `:` commands end with
+`Enter`.
+
+| VS Code | nvim | VS Code | nvim |
+|---|---|---|---|
+| Explorer `Ctrl+Shift+E` | `Space e` | Quick Open `Ctrl+P` | `Space f` |
+| Search in files `Ctrl+Shift+F` | `Space r` or `Ctrl-p` | Find / replace in file | `/text` · `:%s/old/new/gc` |
+| Next / prev tab `Ctrl+PgDn` / `PgUp` | `L` / `H` | Close tab `Ctrl+W` | `Space x` |
+| Split editor `Ctrl+\` | `:vsp` | Focus other side `Ctrl+1` / `2` | `Ctrl-w h` / `l`, or click |
+| Save `Ctrl+S` | `:w` | Undo / redo | `u` / `Ctrl-r` |
+| Add next match `Ctrl+D` | `Ctrl-n` | Toggle comment `Ctrl+/` | `gcc` · `gc` on a selection |
+| Move line `Alt+↑` / `↓` | `Space k` / `Space j` | Column select `Shift+Alt+drag` | `Space v` |
+| Hover | `K` | Go to definition `F12` | `Ctrl-]` |
+| Go back `Alt+←` | `Ctrl-o` | Find references `Shift+F12` | `grr` |
+| Rename `F2` | `grn` | Quick fix `Ctrl+.` | `gra` |
+| Next problem `F8` | `]d` / `[d` | Outline `Ctrl+Shift+O` | `Space o` or `F6` |
+| Terminal `` Ctrl+` `` | `Space t` or `F7` | Source Control | `:Git`, then `s` stage · `u` unstage · `cc` commit |
+| Blame / diff | `:Git blame` / `:Gdiffsplit` | Save all and quit | `:wqa` (`:qa!` discards changes) |
+
+In Windows Terminal:
+
+- `Ctrl+V` is the terminal's paste and never reaches nvim. Column-select with
+  `Space v`; paste with `p`.
+- The mouse works inside nvim: click panes and files, scroll, drag a border to
+  resize. Hold `Shift` while dragging to select text for the terminal's own
+  copy (`Ctrl+C`).
+- `Ctrl+Shift+T` opens a Windows Terminal tab: a separate full-size shell,
+  outside nvim.
+
+---
+
 ## Neovim
 
 ### Your keys — Space is the leader
@@ -65,7 +101,10 @@ Space ┬ e ...... file tree ........ NERDTree
       ├ t ...... terminal ......... Floaterm        also F7 (works in insert + terminal mode)
       ├ u ...... undo history ..... Undotree
       ├ v ...... block select ..... = Ctrl-v, which Windows Terminal steals
+      ├ x ...... close file tab ... keeps the pane (:bd closes it too)
       └ j / k .. move line down/up  in visual mode: moves the selection
+
+H / L ...... previous / next file tab
 ```
 
 Pressing a panel key again closes the panel. In visual mode, `Tab` / `Shift-Tab`
@@ -122,12 +161,14 @@ old buffer-local search; the LSP jump is `Ctrl-]`.
 | `>>` / `<<` / `==` | indent / dedent / auto-indent | `gcc` / `gc{motion}` | toggle comment |
 | `:e file` / `:w` / `:q!` | open / save / quit without saving | `:bn` `:bp` `:bd` | next / prev / close buffer |
 
-### Panes, tabs and the built-in terminal
+### File tabs, panes and the built-in terminal
 
-`Ctrl-w` is two steps: press it, let go, then press the next key.
+`Ctrl-w` is two steps: press it, let go, then press the next key. The mouse
+works too: click a pane to focus it, drag a border to resize.
 
 | Key | Action | Key | Action |
 |---|---|---|---|
+| `H` / `L` | previous / next file tab | `Space x` | close file tab, keep the pane |
 | `:sp` / `:vsp` (`Ctrl-w s` / `v`) | split stacked / side by side | `:sp file` / `:vsp file` | split with another file |
 | `Ctrl-w h/j/k/l` | pane left / below / above / right | `Ctrl-w w` / `p` | next pane / last-used pane |
 | `Ctrl-w =` | equalize sizes | `Ctrl-w _` / `\|` | maximize height / width |
@@ -139,8 +180,10 @@ old buffer-local search; the LSP jump is `Ctrl-]`.
 | `Ctrl-\ Ctrl-n` | leave terminal mode (pane keys work again) | `i` | type in the shell again |
 | `:bd!` | close terminal and kill its shell | `exit` | same, from inside the shell |
 
-A tab is a layout of panes, not one file. To hop between open files, use
-buffers (`:ls`, `:b name`). Don't close a terminal with `:q`: the shell keeps
+The bar along the top lists open files, like VS Code's tabs. Close them with
+`Space x`, not `:bd`, which also closes the pane the file was in. A Vim tab
+(`gt`) is something else: a whole layout of panes. While more than one is open,
+the bar lists those instead. Don't close a terminal with `:q`: the shell keeps
 running hidden and `:qa` later fails with *job still running*. A bare `:term`
 replaces the current pane; `:sp | term` keeps it.
 

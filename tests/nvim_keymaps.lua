@@ -367,6 +367,36 @@ test('<F7>', 'floating terminal hides from inside the terminal', function(c)
 end, { hint = KEYCHECK })
 
 -- ------------------------------------------------------------
+-- File tabs (airline tab bar over the buffer list)
+-- ------------------------------------------------------------
+group('File tabs')
+
+local function cur_file(c) return c:lua('return vim.fn.expand("%:t")') end
+
+test('H / L', 'tab bar is on; previous / next file', function(c)
+  expect(c:lua('return vim.o.tabline'):find('airline', 1, true), 'no tab bar: airline tabline is off')
+  c:cmd('edit sample.py | edit notes.txt')
+  c:keys('H')
+  expect(c:wait('vim.fn.expand("%:t") == "sample.py"'), 'H did not go to the previous file, on ' .. cur_file(c))
+  c:keys('L')
+  expect(c:wait('vim.fn.expand("%:t") == "notes.txt"'), 'L did not go to the next file, on ' .. cur_file(c))
+end)
+
+test('L', 'from NERDTree: switches the file pane, tree stays', function(c)
+  c:cmd('edit sample.py | edit notes.txt | NERDTreeToggle')
+  c:keys('L')
+  expect(c:wait('vim.fn.expand("%:t") == "sample.py"'), 'file pane did not switch, on ' .. cur_file(c))
+  expect(c:lua('return T.win_ft("nerdtree")'), 'the tree was replaced by a file')
+end)
+
+test('<Space>x', 'close file tab, keep its pane', function(c)
+  c:cmd('edit sample.py | vsplit | edit notes.txt')
+  c:keys('<Space>x')
+  expect(c:wait('vim.fn.buflisted(vim.fn.bufnr("notes.txt")) == 0'), 'notes.txt is still open')
+  expect(c:lua('return #vim.api.nvim_tabpage_list_wins(0)') == 2, 'its pane was closed too')
+end)
+
+-- ------------------------------------------------------------
 -- Editing
 -- ------------------------------------------------------------
 group('Editing')
