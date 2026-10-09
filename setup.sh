@@ -255,15 +255,16 @@ fi
 
 step
 # chsh can fail when zsh isn't in /etc/shells (common when zsh comes from pixi)
-# or when PAM rejects the change. The stowed .bashrc already does `exec zsh -l`,
-# so a failure here is non-fatal — zsh will still launch in new terminals.
+# or when PAM rejects the change. The stowed .bashrc hands local interactive
+# Bash sessions to zsh, so a failure here is non-fatal. SSH sessions are left
+# in the server-selected shell.
 if chsh -s "$(which zsh)" 2>/dev/null; then
     echo "Default login shell switched to zsh."
 else
     echo "Note: 'chsh' couldn't change the login shell (likely zsh isn't in"
     echo "      /etc/shells, which would need admin rights to add). No worries —"
-    echo "      .bashrc runs 'exec zsh -l' on interactive shells, so opening a"
-    echo "      new terminal will still drop you into zsh."
+    echo "      .bashrc hands local interactive Bash sessions to zsh, so opening"
+    echo "      a new local terminal will still drop you into zsh."
 fi
 
 # === Done

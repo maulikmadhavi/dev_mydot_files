@@ -83,7 +83,7 @@ plugins=(git zsh-autosuggestions z colored-man-pages fzf zsh-syntax-highlighting
 export FZF_BASE=/usr/share/fzf
 
 ZSH_DISABLE_COMPFIX=true
-source $ZSH/oh-my-zsh.sh
+source "$ZSH/oh-my-zsh.sh"
 
 alias vim=nvim
 
@@ -156,7 +156,6 @@ npx() { unfunction npx; [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"; npx "$
 
 export FZF_BASE="$HOME/.pixi/bin/fzf"
 
-export PATH="/home/maulik/.pixi/bin:$PATH"
 # ---------------------- one liner ----------------------
 fixspaces() {
     find "$1" -depth -name "* *" | while IFS= read -r f; do
@@ -174,7 +173,9 @@ fixspaces_preview() {
         echo mv "$f" "$dir/${base// /-}"
     done
 }
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+if [[ -n "${BASH_VERSION:-}" && -s "$NVM_DIR/bash_completion" ]]; then
+    . "$NVM_DIR/bash_completion"
+fi
 
 # Free Ctrl-S / Ctrl-Q from terminal flow control (XON/XOFF). Without this,
 # Ctrl-S freezes the terminal on WSL and Linux until Ctrl-Q — which makes any

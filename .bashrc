@@ -125,10 +125,10 @@ __conda_setup="$("~/miniconda3/bin/conda" 'shell.bash' 'hook' 2> /dev/null)"
 if [ $? -eq 0 ]; then
     eval "$__conda_setup"
 else
-    if [ -f "~/miniconda3/etc/profile.d/conda.sh" ]; then
-        . "~/miniconda3/etc/profile.d/conda.sh"
+    if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
+        . "$HOME/miniconda3/etc/profile.d/conda.sh"
     else
-        export PATH="~/miniconda3/bin:$PATH"
+        export PATH="$HOME/miniconda3/bin:$PATH"
     fi
 fi
 unset __conda_setup
@@ -158,9 +158,6 @@ export PATH=$GOPATH/bin:$GOROOT/bin:$HOME/.local/bin:$PATH
 
 export PATH="$HOME/.pixi/bin:$PATH"
 
-# Just incase zsh is not installed and local install via pixi
-# then add shell and redirect to zsh default
-
 [[ -s $HOME/.autojump/etc/profile.d/autojump.sh ]] && source $HOME/.autojump/etc/profile.d/autojump.sh
 
 
@@ -173,5 +170,10 @@ fixspaces_preview(){ find "$1" -depth -name "* *" -exec bash -c 'for f; do echo 
 
 # --------------------- 
 
-export SHELL=zsh
-exec $SHELL -l
+# Keep the login shell selected by the remote account. In particular, do not
+# replace an SSH session's Bash with a Zsh that may not exist on the server or
+# may have a machine-local configuration.
+if [[ -z "${SSH_CONNECTION:-}" && -z "${SSH_TTY:-}" ]] && command -v zsh >/dev/null 2>&1; then
+    export SHELL="$(command -v zsh)"
+    exec "$SHELL" -l
+fi

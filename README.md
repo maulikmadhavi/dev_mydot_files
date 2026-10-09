@@ -57,7 +57,7 @@ The script prints a redrawn checklist at every step so you can see what's done, 
 ════════════════════════════════════════════════════════════════
 ```
 
-Toward the end the script tries `chsh` to make `zsh` your login shell. On machines where you can't change the login shell (no `/etc/shells` entry for the pixi-installed zsh, or no PAM access), `chsh` is skipped with a note — the stowed `.bashrc` does `exec zsh -l` for interactive shells, so opening a new terminal will still drop you into zsh either way.
+Toward the end the script tries `chsh` to make `zsh` your login shell. On machines where you can't change the login shell (no `/etc/shells` entry for the pixi-installed zsh, or no PAM access), `chsh` is skipped with a note — the stowed `.bashrc` hands local interactive Bash sessions to `zsh -l` when `zsh` is available, so opening a new terminal will still drop you into zsh either way. SSH sessions are intentionally left in the server-selected shell.
 
 ### 4. Restart your terminal
 
@@ -118,7 +118,7 @@ After install, configure your terminal (Windows Terminal, etc.) to use **FiraCod
 ## Troubleshooting
 
 - **`./setup.sh: Permission denied`** — `chmod +x setup.sh` and retry.
-- **`chsh: ... is not in /etc/shells` or PAM error** — non-fatal. The stowed `.bashrc` already does `exec zsh -l` on interactive shells, so new terminals will still launch zsh without needing the login shell changed.
+- **`chsh: ... is not in /etc/shells` or PAM error** — non-fatal. The stowed `.bashrc` hands local interactive Bash sessions to `zsh -l` when it is installed, so new local terminals will still launch zsh without needing the login shell changed. SSH sessions remain in the remote account's configured shell.
 - **`pixi: command not found` after install** — open a new shell, or `export PATH="$HOME/.pixi/bin:$PATH"`.
 - **nvim plugins missing** — open nvim and run `:PlugInstall` manually.
 - **An nvim key does nothing** — run `nvim -l tests/nvim_keymaps.lua` from the repo: it drives every documented keybinding in a real nvim and prints a fix for each failure. If those pass, `nvim --clean -S tests/nvim_keycheck.lua` shows which keys your terminal never delivers. See [cheatsheet → Keys not working?](cheatsheet.md#keys-not-working).
