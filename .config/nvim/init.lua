@@ -104,6 +104,7 @@ vim.g['airline#extensions#tabline#formatter'] = 'unique_tail'   -- file name, no
 map('n', '<leader>e', ':NERDTreeToggle<CR>')
 map('n', '<leader>f', ':Files<CR>')
 map('n', '<leader>r', ':Rg<CR>')
+map('n', '<leader>s', '<cmd>update<CR>', { desc = 'Save file' })
 map('n', '<leader>u', ':UndotreeToggle<CR>')
 -- Blockwise-visual (multiline column edit). Windows Terminal binds ctrl+v to
 -- paste, so plain <C-v> never reaches nvim there — and VS Code's terminal and
@@ -113,10 +114,13 @@ map('n', '<leader>v', '<C-v>')
 -- where function keys are mangled (screen/tmux without matching terminfo).
 map('n', '<leader>t', ':FloatermToggle<CR>')
 map('n', '<leader>o', ':AerialToggle<CR>')
+map('n', '<leader>\\', '<cmd>vsplit<CR>', { desc = 'Split vertically' })
+map('n', '<leader>-', '<cmd>split<CR>', { desc = 'Split horizontally' })
 -- Ctrl-p kept as a second binding for :Rg — in normal mode it is just a
 -- synonym for `k`, so it shadows nothing worth keeping. (Ctrl-r is
 -- deliberately left alone: it is vim's redo.)
 map('n', '<C-p>', ':Rg<CR>')
+map({ 'n', 'x' }, '<C-s>', '<Esc><cmd>update<CR>', { desc = 'Save file' })
 
 -- File tabs: H / L cycle them (VS Code Ctrl+PageUp/PageDown; vim's own H/L
 -- only jump to the top/bottom of the screen) and <leader>x closes one but
@@ -141,6 +145,8 @@ map('n', '<leader>x', in_file_pane(function()
   -- ! only matters for a :term tab: its shell is stopped, as in VS Code.
   vim.cmd.bdelete({ args = { tostring(buf) }, bang = true })
 end))
+-- Keep q as a discoverable alias for the pane-preserving x implementation.
+map('n', '<leader>q', '<leader>x', { remap = true, desc = 'Close file' })
 
 -- NERDTree used to own Ctrl-n as well, but vim-visual-multi defaults to
 -- Ctrl-n and its plugin file is sourced at plug#end() — i.e. after this
@@ -154,6 +160,16 @@ map('n', '<F7>', ':FloatermToggle<CR>')
 map('i', '<F7>', '<Esc>:FloatermToggle<CR>')
 map('t', '<F7>', '<C-\\><C-n>:FloatermToggle<CR>')
 map('n', '<F6>', ':AerialToggle<CR>')
+
+-- LSP leader fallbacks keep the common IDE actions discoverable and usable
+-- when a Ctrl/Alt/function key is intercepted by a terminal or SSH client.
+map('n', '<leader>h', vim.lsp.buf.hover, { desc = 'Hover documentation' })
+map('n', '<leader>gd', vim.lsp.buf.definition, { desc = 'Go to definition' })
+map('n', '<leader>gR', vim.lsp.buf.references, { desc = 'Find references' })
+map('n', '<leader>rn', vim.lsp.buf.rename, { desc = 'Rename symbol' })
+map('n', '<leader>a', vim.lsp.buf.code_action, { desc = 'Code action' })
+map('n', '<leader>d', vim.diagnostic.goto_next, { desc = 'Next diagnostic' })
+map('n', '<leader>D', vim.diagnostic.goto_prev, { desc = 'Previous diagnostic' })
 
 -- Insert-mode <Tab>/<S-Tab> are smart mappings defined in cmp.setup below:
 -- accept AI ghost text > navigate completion menu > literal tab.

@@ -323,6 +323,16 @@ test('<C-p>', 'same as Space r (:Rg)', function(c)
   fzf_lists(c, '<C-p>', 'sample.py:')
 end, { needs = { 'fzf', 'rg' }, hint = KEYCHECK })
 
+test('<C-s> / <Space>s', 'save the current file', function(c)
+  c:cmd('edit notes.txt')
+  c:lua('vim.api.nvim_buf_set_lines(0, -1, -1, false, { "saved" }); vim.bo.modified = true')
+  c:keys('<C-s>')
+  expect(c:wait('not vim.bo.modified'), 'Ctrl-s did not save the file')
+  c:lua('vim.api.nvim_buf_set_lines(0, -1, -1, false, { "saved again" }); vim.bo.modified = true')
+  c:keys('<Space>s')
+  expect(c:wait('not vim.bo.modified'), 'Space-s did not save the file')
+end)
+
 test('<Space>u', 'Undotree opens, second press closes it', function(c)
   c:keys('<Space>u')
   expect(c:wait('T.win_ft("undotree")'), 'no undotree window opened')
@@ -394,6 +404,33 @@ test('<Space>x', 'close file tab, keep its pane', function(c)
   c:keys('<Space>x')
   expect(c:wait('vim.fn.buflisted(vim.fn.bufnr("notes.txt")) == 0'), 'notes.txt is still open')
   expect(c:lua('return #vim.api.nvim_tabpage_list_wins(0)') == 2, 'its pane was closed too')
+end)
+
+test('<Space>q', 'close file, keep its pane', function(c)
+  c:cmd('edit sample.py | vsplit | edit notes.txt')
+  c:keys('<Space>q')
+  expect(c:wait('vim.fn.buflisted(vim.fn.bufnr("notes.txt")) == 0'), 'notes.txt is still open')
+  expect(c:lua('return #vim.api.nvim_tabpage_list_wins(0)') == 2, 'its pane was closed too')
+end)
+
+test('Space split keys', 'leader split mappings open two panes', function(c)
+  c:keys('<Space>\\')
+  expect(c:wait('#vim.api.nvim_tabpage_list_wins(0) == 2'), 'Space-backslash did not split vertically')
+  c:keys('<Space>-')
+  expect(c:wait('#vim.api.nvim_tabpage_list_wins(0) == 3'), 'Space-minus did not split horizontally')
+end)
+
+test('LSP leader fallbacks', 'portable leader mappings exist for IDE actions', function(c)
+  local missing = c:lua([[
+    local keys = { '<Space>h', '<Space>gd', '<Space>gR', '<Space>rn',
+                   '<Space>a', '<Space>d', '<Space>D' }
+    local out = {}
+    for _, key in ipairs(keys) do
+      if vim.fn.maparg(key, 'n') == '' then out[#out + 1] = key end
+    end
+    return out
+  ]])
+  expect(#missing == 0, 'missing: ' .. table.concat(missing, ', '))
 end)
 
 -- ------------------------------------------------------------

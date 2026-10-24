@@ -53,6 +53,7 @@ The script prints a redrawn checklist at every step so you can see what's done, 
   [ ] Install zsh plugins
   [ ] Install nvim plugins
   [ ] Install plocate + index $HOME
+  [ ] Install herdr
   [ ] Set zsh as default shell
 ════════════════════════════════════════════════════════════════
 ```
@@ -93,6 +94,7 @@ After install, configure your terminal (Windows Terminal, etc.) to use **FiraCod
 ### `setup.sh` (Linux)
 - Installs [`pixi`](https://pixi.sh), then via pixi: `tmux`, `nvim`, `zsh`, `fzf`, `ripgrep`, `eza`, `stow`, `basedpyright`, `ruff`, `tree`, `diskus`, `xclip`, `jq`, `yarn`, `git`, `gcc`/`gxx`/`make`/`cmake`.
 - Builds [`plocate`](https://plocate.sesse.net) from source into `~/.local/bin` (not on conda-forge, and apt would need sudo) and indexes `$HOME`; `.zshrc` refreshes the index daily.
+- Installs [`herdr`](https://github.com/herdrdev/herdr) (terminal runtime for coding agents) into `~/.local/bin` via its official installer.
 - Installs `nvm` + Node LTS.
 - Installs `vim-plug` and runs `:PlugInstall` for the plugins in `.config/nvim/init.lua`.
 - Initializes the `oh-my-zsh` submodule and symlinks it to `~/.oh-my-zsh`.
@@ -102,7 +104,7 @@ After install, configure your terminal (Windows Terminal, etc.) to use **FiraCod
 
 ### `setup_powershell_omp.ps1` (Windows)
 - Installs `pixi`, then via pixi: `yarn`, `basedpyright`, `ruff`, `fzf`, `diskus`, `tree`, `ripgrep`, `eza`, `jq`, `gcc`, `gxx`, `make`, `cmake`. (plocate is Linux-only.)
-- Installs `git`, `oh-my-posh`, `PSReadLine`, FiraCode Nerd Font, Neovim, `psmux` (tmux for Windows).
+- Installs `git`, `oh-my-posh`, `PSReadLine`, FiraCode Nerd Font, Neovim, `psmux` (tmux for Windows), [`herdr`](https://github.com/herdrdev/herdr).
 - Installs `vim-plug` and writes a one-line `%LOCALAPPDATA%\nvim\init.lua` stub that loads the repo's `.config/nvim/init.lua`, so Windows and WSL share one config.
 - Writes `$PROFILE` with: oh-my-posh init (custom `zash.omp.json` theme), PSReadLine predictive autocomplete, and Linux-style aliases (`ls`, `cat`, `grep`, …). Idempotent — safe to re-run without duplicating lines.
 

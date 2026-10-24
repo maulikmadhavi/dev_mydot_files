@@ -23,6 +23,7 @@ STEPS=(
   "Install zsh plugins"
   "Install nvim plugins"
   "Install plocate + index \$HOME"
+  "Install herdr"
   "Set zsh as default shell"
 )
 CURRENT_STEP=-1
@@ -251,7 +252,19 @@ else
     rm -rf "$PLOCATE_SRC"
 fi
 
-# === 10. Switch default shell to zsh (best-effort; needs no sudo)
+# === 10. herdr (terminal runtime for coding agents)
+
+step
+# Official installer drops a static binary into ~/.local/bin (already on PATH
+# via .zshrc/.bashrc); no sudo. Re-running it upgrades to the latest release.
+export PATH="$HOME/.local/bin:$PATH"
+if command -v herdr >/dev/null 2>&1; then
+    echo "herdr already installed — skipping."
+else
+    curl -fsSL https://herdr.dev/install.sh | sh || fail_step
+fi
+
+# === 11. Switch default shell to zsh (best-effort; needs no sudo)
 
 step
 # chsh can fail when zsh isn't in /etc/shells (common when zsh comes from pixi)

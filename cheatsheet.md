@@ -65,15 +65,15 @@ Every key below is pressed after `Esc` (normal mode), and `:` commands end with
 |---|---|---|---|
 | Explorer `Ctrl+Shift+E` | `Space e` | Quick Open `Ctrl+P` | `Space f` |
 | Search in files `Ctrl+Shift+F` | `Space r` or `Ctrl-p` | Find / replace in file | `/text` · `:%s/old/new/gc` |
-| Next / prev tab `Ctrl+PgDn` / `PgUp` | `L` / `H` | Close tab `Ctrl+W` | `Space x` |
-| Split editor `Ctrl+\` | `:vsp` | Focus other side `Ctrl+1` / `2` | `Ctrl-w h` / `l`, or click |
-| Save `Ctrl+S` | `:w` | Undo / redo | `u` / `Ctrl-r` |
+| Next / prev tab `Ctrl+PgDn` / `PgUp` | `L` / `H` | Close file | `Space x` / `Space q` |
+| Split editor `Ctrl+\` | `Space \` / `Space -` | Focus other side `Ctrl+1` / `2` | `Ctrl-w h` / `l`, or click |
+| Save `Ctrl+S` | `Ctrl-s` / `Space s` | Undo / redo | `u` / `Ctrl-r` |
 | Add next match `Ctrl+D` | `Ctrl-n` | Toggle comment `Ctrl+/` | `gcc` · `gc` on a selection |
 | Move line `Alt+↑` / `↓` | `Space k` / `Space j` | Column select `Shift+Alt+drag` | `Space v` |
 | Hover | `K` | Go to definition `F12` | `Ctrl-]` |
 | Go back `Alt+←` | `Ctrl-o` | Find references `Shift+F12` | `grr` |
-| Rename `F2` | `grn` | Quick fix `Ctrl+.` | `gra` |
-| Next problem `F8` | `]d` / `[d` | Outline `Ctrl+Shift+O` | `Space o` or `F6` |
+| Rename `F2` | `grn` / `Space rn` | Quick fix `Ctrl+.` | `gra` / `Space a` |
+| Next problem `F8` | `]d` / `[d` / `Space d` | Outline `Ctrl+Shift+O` | `Space o` or `F6` |
 | Terminal `` Ctrl+` `` | `Space t` or `F7` | Source Control | `:Git`, then `s` stage · `u` unstage · `cc` commit |
 | Blame / diff | `:Git blame` / `:Gdiffsplit` | Save all and quit | `:wqa` (`:qa!` discards changes) |
 
@@ -97,12 +97,22 @@ In Windows Terminal:
 Space ┬ e ...... file tree ........ NERDTree
       ├ f ...... find file ........ fzf :Files
       ├ r ...... search text ...... fzf :Rg         also Ctrl-p
+      ├ s ...... save file ........ :update         also Ctrl-s
       ├ o ...... code outline ..... Aerial          also F6
       ├ t ...... terminal ......... Floaterm        also F7 (works in insert + terminal mode)
       ├ u ...... undo history ..... Undotree
       ├ v ...... block select ..... = Ctrl-v, which Windows Terminal steals
       ├ x ...... close file tab ... keeps the pane (:bd closes it too)
-      └ j / k .. move line down/up  in visual mode: moves the selection
+      ├ q ...... close file ........ keeps the pane
+      ├ j / k .. move line down/up  in visual mode: moves the selection
+      ├ \ ...... vertical split .... :vsplit
+      ├ - ...... horizontal split . :split
+      ├ h ...... hover docs ........ LSP
+      ├ gd ..... definition ....... LSP
+      ├ gR ..... references ....... LSP
+      ├ rn ..... rename ........... LSP
+      ├ a ...... code action ...... LSP
+      └ d / D .. next / previous .. diagnostic
 
 H / L ...... previous / next file tab
 ```
@@ -142,6 +152,9 @@ three settings: `MINUET_ENDPOINT` (URL), `MINUET_MODEL` (the model to use) and
 | `grr` | references → quickfix | `gO` | document symbols |
 | `]d` / `[d` | next / prev diagnostic | `Ctrl-s` (insert) | signature help |
 
+Normal-mode `Ctrl-s` and `Space s` save the current file. Insert-mode `Ctrl-s`
+opens signature help so it remains compatible with the completion workflow.
+
 Saving a `*.py` file formats it with ruff. **Not `gd`:** in nvim 0.11 `gd` is the
 old buffer-local search; the LSP jump is `Ctrl-]`.
 
@@ -168,7 +181,8 @@ works too: click a pane to focus it, drag a border to resize.
 
 | Key | Action | Key | Action |
 |---|---|---|---|
-| `H` / `L` | previous / next file tab | `Space x` | close file tab, keep the pane |
+| `H` / `L` | previous / next file tab | `Space x` / `Space q` | close file, keep the pane |
+| `Ctrl-s` / `Space s` | save current file | `Space \` / `Space -` | vertical / horizontal split |
 | `:sp` / `:vsp` (`Ctrl-w s` / `v`) | split stacked / side by side | `:sp file` / `:vsp file` | split with another file |
 | `Ctrl-w h/j/k/l` | pane left / below / above / right | `Ctrl-w w` / `p` | next pane / last-used pane |
 | `Ctrl-w =` | equalize sizes | `Ctrl-w _` / `\|` | maximize height / width |

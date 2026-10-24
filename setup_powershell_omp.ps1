@@ -257,6 +257,17 @@ if (Get-Command choco -ErrorAction SilentlyContinue) {
     Write-Host "[!] Chocolatey not found — skipping psmux (tmux for Windows). Install choco and re-run if you want it." -ForegroundColor Yellow
 }
 
+# === herdr (terminal runtime for coding agents; mirror of setup.sh)
+
+if (Get-Command herdr -ErrorAction SilentlyContinue) {
+    Write-Host "[OK] herdr is already installed." -ForegroundColor Green
+} else {
+    Install-WithFeedback "herdr" {
+        # The installer adds its bin dir to the user PATH; new shells pick it up.
+        powershell -ExecutionPolicy Bypass -c "irm https://herdr.dev/install.ps1 | iex"
+    }
+}
+
 # === PSReadLine config
 
 Write-Host "`n[*] Configuring PSReadLine (IntelliSense)..." -ForegroundColor Cyan
